@@ -271,3 +271,26 @@ class OCRHead(nn.Module):
 
 
         return ocr_out
+
+class ASP_OCRHead(nn.Module):
+    def __init__(self,nclass,ocr_mid_channels=256,ocr_key_channels=256,base_outchannel=2048):
+        super(ASP_OCRHead,self).__init__()
+        self.asp_ocr_head = SpatialOCR_ASP_Module(features=base_outchannel,
+                                                  hidden_features=ocr_key_channels,
+                                                  out_features=ocr_mid_channels,
+                                                  num_classes=nclass,
+                                                  )
+
+        self.head = nn.Conv2d(ocr_mid_channels, nclass, kernel_size=1, stride=1, padding=0, bias=True)
+        self.dsn_head = nn.Sequential(
+            nn.Conv2d(1024, 512, kernel_size=3, stride=1, padding=1),
+            ModuleHelper.BNReLU(512),
+            nn.Dropout2d(0.1),
+            nn.Conv2d(512, self.num_classes, kernel_size=1, stride=1, padding=0, bias=True)
+        )
+    def forward(self, x,x_aux):
+
+        x = self.asp_ocr_head(x, x_aux)
+        x = self.head(x)
+
+        return x

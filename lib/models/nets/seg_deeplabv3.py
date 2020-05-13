@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 class DeepLabV3(BaseNet):
     def __init__(self,config,aux = True,**kwargs):
         super(DeepLabV3, self).__init__(config,**kwargs)
-        self.atrous_rate = config.MODEL.ATROUS_RATE # default [6,12,18]
+        self.atrous_rate = config.MODEL.ATROUS_RATE #  [6,12,18] for stride 16, [12,24,36] for stride 8
         self.aspp = ASPP(num_classes=self.nclass,atrous_rate=self.atrous_rate,inchannel=2048,norm_layer=self.norm_layer)
         self.aux = aux
         self.aux_layer = nn.Sequential(nn.Conv2d(1024, 256, 3, padding=1, bias=False),
