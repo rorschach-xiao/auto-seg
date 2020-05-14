@@ -142,6 +142,8 @@ class BaseDataset(data.Dataset):
             prediction_crop /= np.expand_dims(count_crop, 2)
             prediction_crop = prediction_crop[pad_h_half:pad_h_half + new_h,pad_w_half:pad_w_half + new_w]
             prediction_crop = cv2.resize(prediction_crop, (ori_w, ori_h), interpolation=cv2.INTER_LINEAR)
+            if (len(prediction_crop.shape)==2):
+                prediction_crop = np.expand_dims(prediction_crop,2)
             prediction+=prediction_crop
         prediction/=len(scales)
         return prediction
