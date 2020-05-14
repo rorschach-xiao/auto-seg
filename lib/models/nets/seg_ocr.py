@@ -21,7 +21,7 @@ class OCRNet(BaseNet):
                                        self.norm_layer(512),
                                        nn.ReLU(),
                                        nn.Dropout2d(0.1, False),
-                                       nn.Conv2d(512, config.DATASET.NUM_CLASSES, 1),bias=True)
+                                       nn.Conv2d(512, config.DATASET.NUM_CLASSES, 1,bias=True))
 
     def base_forward(self, x):
         x = self.pretrained.conv1(x)

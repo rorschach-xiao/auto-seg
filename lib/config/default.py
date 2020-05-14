@@ -99,7 +99,7 @@ _C.TRAIN.TRANS_LIST = ['random_scale',
                        'crop',
                        'totensor',
                        'normalize']
-_V.VAL = CN()
+_C.VAL = CN()
 _C.VAL.TRANS_LIST = ['crop','totensor','normalize']
 
 _C.TRAIN.RANDOM_BRIGHTNESS_SHIFT_VALUE = 10

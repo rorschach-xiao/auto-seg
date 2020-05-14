@@ -138,7 +138,7 @@ class ResNet(nn.Module):
         - Yu, Fisher, and Vladlen Koltun. "Multi-scale context aggregation by dilated convolutions."
     """
     # pylint: disable=unused-variable
-    def __init__(self, block, layers, num_classes=1000, dilated=True, norm_layer=nn.BatchNorm2d, multi_grid=False, multi_dilation=None,deep_base=False,spm_on=False):
+    def __init__(self, block, layers, num_classes=1000, dilated=True, norm_layer=nn.BatchNorm2d, multi_grid=False, multi_dilation=None,deep_base=False,spm_on=False,**kwargs):
         super(ResNet, self).__init__()
         self.deep_base = deep_base
         self.spm_on = spm_on

@@ -268,24 +268,24 @@ trans_dict = {
         'normalize':Normalize,
         'resize':Resize
     }
-trans_para_dict = {
-        'random_scale': {'scale':[config.TRAIN.RANDOM_SCALE_MIN,config.TRAIN.RANDOM_SCALE_MAX]},
-        'random_rotate': {'rotate':[-config.TRAIN.RANDOM_ANGLE_DEGREE,config.TRAIN.RANDOM_ANGLE_DEGREE],
-                          'padding':mean,
-                          'ignore_label':config.TRAIN.IGNORE_LABEL},
-        'random_blur': {},
-        'random_hflip': {},
-        'random_vflip': {},
-        'crop': {'size':[config.TRAIN.IMAGE_SIZE[1], config.TRAIN.IMAGE_SIZE[0]],
-                 'crop_type':'rand', 'padding':mean,
-                 'ignore_label':config.TRAIN.IGNORE_LABEL},
-        'totensor': {},
-        'normalize': {'mean':mean,'std':std},
-        'resize': {'size':[config.TRAIN.IMAGE_SIZE[1], config.TRAIN.IMAGE_SIZE[0]]}
-    }
 
 def get_train_transform(config):
     trans_list = []
+    trans_para_dict = {
+        'random_scale': {'scale': [config.TRAIN.RANDOM_SCALE_MIN, config.TRAIN.RANDOM_SCALE_MAX]},
+        'random_rotate': {'rotate': [-config.TRAIN.RANDOM_ANGLE_DEGREE, config.TRAIN.RANDOM_ANGLE_DEGREE],
+                          'padding': mean,
+                          'ignore_label': config.TRAIN.IGNORE_LABEL},
+        'random_blur': {},
+        'random_hflip': {},
+        'random_vflip': {},
+        'crop': {'size': [config.TRAIN.IMAGE_SIZE[1], config.TRAIN.IMAGE_SIZE[0]],
+                 'crop_type': 'rand', 'padding': mean,
+                 'ignore_label': config.TRAIN.IGNORE_LABEL},
+        'totensor': {},
+        'normalize': {'mean': mean, 'std': std},
+        'resize': {'size': [config.TRAIN.IMAGE_SIZE[1], config.TRAIN.IMAGE_SIZE[0]]}
+    }
     for trans in config.TRAIN.TRANS_LIST:
         if trans in trans_dict:
             trans_list.append(trans_dict[trans](**trans_para_dict[trans]))
@@ -293,6 +293,14 @@ def get_train_transform(config):
 
 def get_val_transform(config):
     trans_list = []
+    trans_para_dict = {
+        'crop': {'size': [config.TRAIN.IMAGE_SIZE[1], config.TRAIN.IMAGE_SIZE[0]],
+                 'crop_type': 'rand', 'padding': mean,
+                 'ignore_label': config.TRAIN.IGNORE_LABEL},
+        'totensor': {},
+        'normalize': {'mean': mean, 'std': std},
+        'resize': {'size': [config.TRAIN.IMAGE_SIZE[1], config.TRAIN.IMAGE_SIZE[0]]}
+    }
     for trans in config.VAL.TRANS_LIST:
         if trans in trans_dict:
             trans_list.append(trans_dict[trans](**trans_para_dict[trans]))
@@ -300,7 +308,12 @@ def get_val_transform(config):
 
 def get_test_transform(config):
     trans_list = []
-    for trans in config.VAL.TRANS_LIST:
+    trans_para_dict = {
+        'totensor': {},
+        'normalize': {'mean': mean, 'std': std},
+        'resize': {'size': [config.TEST.IMAGE_SIZE[1], config.TEST.IMAGE_SIZE[0]]}
+    }
+    for trans in config.TEST.TRANS_LIST:
         if trans in trans_dict:
             trans_list.append(trans_dict[trans](**trans_para_dict[trans]))
     return trans_list

@@ -29,6 +29,9 @@ class BaseDataset(data.Dataset):
         if num_samples:
             self.files = self.files[:num_samples]
 
+    def __len__(self):
+        return len(self.files)
+
     def read_files(self):
         files = []
         for item in self.img_list:

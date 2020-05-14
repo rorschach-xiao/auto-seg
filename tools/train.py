@@ -18,7 +18,8 @@ import torch.optim
 from tensorboardX import SummaryWriter
 
 import _init_paths
-
+import models
+import datasets
 from config import config
 from config import update_config
 from core.criterion import CrossEntropy, OhemCrossEntropy,SoftDiceLoss,LovaszHinge,LovaszSoftmax,LovaszSigmoid,StableBCELoss,ComboLoss
@@ -48,7 +49,7 @@ def parse_args():
     return args
 
 def get_sampler(dataset):
-    from lib.utils.distributed import is_distributed
+    from utils.distributed import is_distributed
     if is_distributed():
         from torch.utils.data.distributed import DistributedSampler
         return DistributedSampler(dataset)
