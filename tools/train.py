@@ -19,13 +19,13 @@ from tensorboardX import SummaryWriter
 
 import _init_paths
 
-from lib.config import config
-from lib.config import update_config
-from lib.core.criterion import CrossEntropy, OhemCrossEntropy,SoftDiceLoss,LovaszHinge,LovaszSoftmax,LovaszSigmoid,StableBCELoss,ComboLoss
-from lib.core.function import train, validate
-from lib.utils.modelsummary import get_model_summary
-from lib.utils.utils import create_logger, FullModel
-from lib.utils.transform import *
+from config import config
+from config import update_config
+from core.criterion import CrossEntropy, OhemCrossEntropy,SoftDiceLoss,LovaszHinge,LovaszSoftmax,LovaszSigmoid,StableBCELoss,ComboLoss
+from core.function import train, validate
+from utils.modelsummary import get_model_summary
+from utils.utils import create_logger, FullModel
+from utils.transform import *
 
 
 def parse_args():
@@ -90,7 +90,7 @@ def main():
         )
 
     # build model
-    model = eval('lib.models.nets.' + config.MODEL.NAME +
+    model = eval('models.nets.' + config.MODEL.NAME +
                      '.get_seg_model')(config)
 
     # dump_input = torch.rand(

@@ -3,7 +3,7 @@ import torch
 
 from torch.nn import functional as F
 from torch.autograd import Variable
-from lib.models.modules.sp_block import SPBlock
+from models.modules.sp_block import SPBlock
 import math
 import torch.utils.model_zoo as model_zoo
 import torch.nn as nn

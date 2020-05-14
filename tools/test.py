@@ -13,14 +13,13 @@ import torch.nn as nn
 import torch.backends.cudnn as cudnn
 
 import _init_paths
-import lib.models
-import lib.datasets
-from lib.config import config
-from lib.config import update_config
-from lib.core.function import testval, test
-from lib.utils.modelsummary import get_model_summary
-from lib.utils.utils import create_logger, FullModel
-from lib.utils.transform import *
+
+from config import config
+from config import update_config
+from core.function import testval, test
+from utils.modelsummary import get_model_summary
+from utils.utils import create_logger, FullModel
+from utils.transform import *
 
 
 def parse_args():
@@ -57,11 +56,11 @@ def main():
 
     # build model
     if torch.__version__.startswith('1'):
-        module = eval('lib.models.nets.' + config.MODEL.NAME)
+        module = eval('models.nets.' + config.MODEL.NAME)
         module.BatchNorm2d_class = module.BatchNorm2d = torch.nn.BatchNorm2d
-        module = eval('lib.models.backbone.basenet')
+        module = eval('models.backbone.basenet')
         module.BatchNorm2d_class = module.BatchNorm2d = torch.nn.BatchNorm2d
-    model = eval('lib.models.nets.' + config.MODEL.NAME +
+    model = eval('models.nets.' + config.MODEL.NAME +
                  '.get_seg_model')(config)
     gpus = list(config.GPUS)
     model = nn.DataParallel(model, device_ids=gpus).cuda()

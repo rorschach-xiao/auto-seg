@@ -6,10 +6,10 @@ from torch.nn.functional import upsample,normalize
 
 import logging
 
-from lib.models.tools.bn_helper import BatchNorm2d, BatchNorm2d_class, relu_inplace
-from lib.models.backbones.hrnet import hrnet64,hrnet48,hrnet32,hrnet18
-from lib.models.backbones.resnest import resnest50,resnest101,resnest200
-from lib.models.backbones.resnet import resnet50,resnet101,resnet152
+from ..tools.bn_helper import BatchNorm2d, BatchNorm2d_class, relu_inplace
+from .hrnet import hrnet64,hrnet48,hrnet32,hrnet18
+from .resnest import resnest50,resnest101,resnest200
+from .resnet import resnet50,resnet101,resnet152
 
 import torch.nn.functional as F
 

@@ -1,8 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.functional as F
-from lib.models.backbones.basenet import BaseNet
-from lib.models.modules.ocr_block import SpatialGather_Module,SpatialOCR_Module,OCRHead
+from ..backbones.basenet import BaseNet
+from ..modules.ocr_block import SpatialGather_Module,SpatialOCR_Module,OCRHead
 
 import logging
 

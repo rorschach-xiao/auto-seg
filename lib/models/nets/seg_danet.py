@@ -4,8 +4,8 @@ import torch.nn.functional as F
 
 import logging
 
-from lib.models.modules.atten_block import CAM_Module,PAM_Module
-from lib.models.backbones.basenet import BaseNet
+from ..modules.atten_block import CAM_Module,PAM_Module
+from ..backbones.basenet import BaseNet
 
 logger = logging.getLogger(__name__)
 

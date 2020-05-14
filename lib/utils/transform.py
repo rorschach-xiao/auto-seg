@@ -8,7 +8,7 @@ import numpy as np
 import numbers
 import collections
 import cv2
-from lib.config import config
+from config import config
 
 import torch
 

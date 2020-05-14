@@ -7,8 +7,8 @@ import torch.nn.functional as F
 
 import logging
 
-from lib.models.modules.aspp_block import ASPP
-from lib.models.backbones.basenet import BaseNet
+from ..modules.aspp_block import ASPP
+from ..backbones.basenet import BaseNet
 
 
 up_kwargs = {'mode': 'bilinear', 'align_corners': False}

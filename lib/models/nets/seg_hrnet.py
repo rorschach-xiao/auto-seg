@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.functional as F
-from lib.models.backbones.basenet import BaseNet
+from ..backbones.basenet import BaseNet
 
 import logging
 

@@ -10,7 +10,7 @@ import math
 import torch
 import torch.nn as nn
 
-from lib.models.modules.splat import SplAtConv2d
+from models.modules.splat import SplAtConv2d
 
 __all__ = ['resnest200', 'resnest101','resnest50']
 

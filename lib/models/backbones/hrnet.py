@@ -19,8 +19,8 @@ import torch.nn as nn
 import torch._utils
 import torch.nn.functional as F
 
-from lib.models.tools.bn_helper import BatchNorm2d, BatchNorm2d_class, relu_inplace
-from lib.config.models import MODEL_CONFIGS
+from ..tools.bn_helper import BatchNorm2d, BatchNorm2d_class, relu_inplace
+from config.models import MODEL_CONFIGS
 
 ALIGN_CORNERS = True
 BN_MOMENTUM = 0.1

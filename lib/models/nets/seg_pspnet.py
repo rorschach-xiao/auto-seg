@@ -3,8 +3,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 import logging
-from lib.models.modules.psp_block import PyramidPooling
-from lib.models.backbones.basenet import BaseNet
+from ..modules.psp_block import PyramidPooling
+from ..backbones.basenet import BaseNet
 
 logger = logging.getLogger(__name__)
 
