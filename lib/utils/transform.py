@@ -269,7 +269,7 @@ trans_dict = {
         'resize':Resize
     }
 trans_para_dict = {
-        'random_scale': {'aspect_ratio':[config.TRAIN.RANDOM_SCALE_MIN,config.TRAIN.RANDOM_SCALE_MAX]},
+        'random_scale': {'scale':[config.TRAIN.RANDOM_SCALE_MIN,config.TRAIN.RANDOM_SCALE_MAX]},
         'random_rotate': {'rotate':[-config.TRAIN.RANDOM_ANGLE_DEGREE,config.TRAIN.RANDOM_ANGLE_DEGREE],
                           'padding':mean,
                           'ignore_label':config.TRAIN.IGNORE_LABEL},

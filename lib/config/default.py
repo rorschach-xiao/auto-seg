@@ -40,18 +40,15 @@ _C.MODEL.NUM_OUTPUTS = 1
 _C.MODEL.EXTRA = CN(new_allowed=True)
 _C.MODEL.SV = False
 
-"""
-DANet parameters
-"""
-_C.MODEL.DEEPBASE=False
+_C.MODEL.DEEPBASE = False
 _C.MODEL.DILATION = True
-_C.MODEL.BACKBONE = "resnet152"
-
-"""
-SPNet parameters
-"""
-_C.MODEL.SPM= False
+_C.MODEL.BACKBONE = "resnet101"
 _C.MODEL.MULTI_GRID = False
+
+'''
+SPNet parameters
+'''
+_C.MODEL.SPM= False
 
 '''
 DEEPLABV3 parameters
@@ -94,15 +91,19 @@ _C.TRAIN.BASE_SIZE = 2048
 _C.TRAIN.DOWNSAMPLERATE = 1
 _C.TRAIN.FLIP = True
 _C.TRAIN.MULTI_SCALE = True
-_C.TRAIN.SCALE_FACTOR = 16
 
-_C.TRAIN.RANDOM_BRIGHTNESS = False
+_C.TRAIN.TRANS_LIST = ['random_scale',
+                       'random_rotate',
+                       'random_blur',
+                       'random_flip',
+                       'crop',
+                       'totensor',
+                       'normalize']
+
+_C.VAL.TRANS_LIST = ['crop','totensor','normalize']
+
 _C.TRAIN.RANDOM_BRIGHTNESS_SHIFT_VALUE = 10
-_C.TRAIN.RANDOM_CONTRAST = False
-_C.TRAIN.RANDOM_COLORSPACE = False
-_C.TRAIN.RANDOM_ANGLE= False
 _C.TRAIN.RANDOM_ANGLE_DEGREE=10
-_C.TRAIN.RANDOM_BLUR=False
 _C.TRAIN.RANDOM_SCALE_MIN=0.5
 _C.TRAIN.RANDOM_SCALE_MAX=2.0
 
@@ -116,6 +117,8 @@ _C.TRAIN.OPTIMIZER = 'sgd'
 _C.TRAIN.MOMENTUM = 0.9
 _C.TRAIN.WD = 0.0001
 _C.TRAIN.NESTEROV = False
+_C.TRAIN.BETA = [0.9, 0.999]
+_C.TRAIN.EPS = 1e-08
 _C.TRAIN.IGNORE_LABEL = -1
 
 _C.TRAIN.BEGIN_EPOCH = 0
@@ -139,12 +142,14 @@ _C.TEST.BATCH_SIZE_PER_GPU = 32
 # only testing some samples
 _C.TEST.NUM_SAMPLES = 0
 
+_C.TEST.TRANS_LIST = ['totensor']
 _C.TEST.MODEL_FILE = ''
 _C.TEST.FLIP_TEST = False
 _C.TEST.MULTI_SCALE = False
 _C.TEST.SCALE_LIST = [1]
 _C.TEST.STRIDE_RATE = 2/3
-
+_C.TEST.TESTVAL_SAVE_DIR = "testval_results"
+_C.TEST.TEST_SAVE_DIR = "test_results"
 _C.TEST.OUTPUT_INDEX = -1
 
 # debug
