@@ -33,7 +33,7 @@ class HRNet_OCR(BaseNet):
         # aux
         out_aux = self.aux_head(feats)
         # ocr
-        out_ocr = self.ocr(feats)
+        out_ocr = self.ocr(feats,out_aux)
 
         out_aux_seg.append(out_aux)
         out_aux_seg.append(out_ocr)

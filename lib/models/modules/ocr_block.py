@@ -286,7 +286,7 @@ class ASP_OCRHead(nn.Module):
             nn.Conv2d(1024, 512, kernel_size=3, stride=1, padding=1),
             ModuleHelper.BNReLU(512),
             nn.Dropout2d(0.1),
-            nn.Conv2d(512, self.num_classes, kernel_size=1, stride=1, padding=0, bias=True)
+            nn.Conv2d(512, nclass, kernel_size=1, stride=1, padding=0, bias=True)
         )
     def forward(self, x,x_aux):
 

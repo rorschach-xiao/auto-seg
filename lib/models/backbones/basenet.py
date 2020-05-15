@@ -78,43 +78,43 @@ class BaseNet(nn.Module):
         '''
         use for hrnet forward
         '''
-        x = self.conv1(x)
-        x = self.bn1(x)
-        x = self.relu(x)
-        x = self.conv2(x)
-        x = self.bn2(x)
-        x = self.relu(x)
-        x = self.layer1(x)
+        x = self.pretrained.conv1(x)
+        x = self.pretrained.bn1(x)
+        x = self.pretrained.relu(x)
+        x = self.pretrained.conv2(x)
+        x = self.pretrained.bn2(x)
+        x = self.pretrained.relu(x)
+        x = self.pretrained.layer1(x)
 
         x_list = []
-        for i in range(self.stage2_cfg['NUM_BRANCHES']):
-            if self.transition1[i] is not None:
-                x_list.append(self.transition1[i](x))
+        for i in range(self.pretrained.stage2_cfg['NUM_BRANCHES']):
+            if self.pretrained.transition1[i] is not None:
+                x_list.append(self.pretrained.transition1[i](x))
             else:
                 x_list.append(x)
-        y_list = self.stage2(x_list)
+        y_list = self.pretrained.stage2(x_list)
 
         x_list = []
-        for i in range(self.stage3_cfg['NUM_BRANCHES']):
-            if self.transition2[i] is not None:
-                if i < self.stage2_cfg['NUM_BRANCHES']:
-                    x_list.append(self.transition2[i](y_list[i]))
+        for i in range(self.pretrained.stage3_cfg['NUM_BRANCHES']):
+            if self.pretrained.transition2[i] is not None:
+                if i < self.pretrained.stage2_cfg['NUM_BRANCHES']:
+                    x_list.append(self.pretrained.transition2[i](y_list[i]))
                 else:
-                    x_list.append(self.transition2[i](y_list[-1]))
+                    x_list.append(self.pretrained.transition2[i](y_list[-1]))
             else:
                 x_list.append(y_list[i])
-        y_list = self.stage3(x_list)
+        y_list = self.pretrained.stage3(x_list)
 
         x_list = []
-        for i in range(self.stage4_cfg['NUM_BRANCHES']):
-            if self.transition3[i] is not None:
-                if i < self.stage3_cfg['NUM_BRANCHES']:
-                    x_list.append(self.transition3[i](y_list[i]))
+        for i in range(self.pretrained.stage4_cfg['NUM_BRANCHES']):
+            if self.pretrained.transition3[i] is not None:
+                if i < self.pretrained.stage3_cfg['NUM_BRANCHES']:
+                    x_list.append(self.pretrained.transition3[i](y_list[i]))
                 else:
-                    x_list.append(self.transition3[i](y_list[-1]))
+                    x_list.append(self.pretrained.transition3[i](y_list[-1]))
             else:
                 x_list.append(y_list[i])
-        x = self.stage4(x_list)
+        x = self.pretrained.stage4(x_list)
 
         # Upsampling
         x0_h, x0_w = x[0].size(2), x[0].size(3)
