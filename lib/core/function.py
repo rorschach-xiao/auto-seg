@@ -95,8 +95,8 @@ def validate(config, testloader, model, writer_dict):
     confusion_matrix = np.zeros(
         (config.DATASET.NUM_CLASSES, config.DATASET.NUM_CLASSES, nums))
     with torch.no_grad():
-        ious = []
-        dices = []
+        ious = [[] for i in range(nums)]
+        dices = [[] for i in range(nums)]
         for idx, batch in enumerate(testloader):
             image, label, _, _ = batch
             size = label.size()
@@ -112,27 +112,20 @@ def validate(config, testloader, model, writer_dict):
                     input=x, size=size[-2:],
                     mode='bilinear', align_corners=config.MODEL.ALIGN_CORNERS
                 )
-
-                confusion_matrix[..., i] += get_confusion_matrix(
-                    label,
-                    x,
-                    size,
-                    config.DATASET.NUM_CLASSES,
-                    config.TRAIN.IGNORE_LABEL
-                )
-
-                if config.DATASET.NUM_CLASSES==2 and i==len(pred)-1:
-                    # ocr output
-                    pred_ = x[:,1,:,:]>x[:,0,:,:]
-                    iou_batch,dice_batch = iou_dice_binary(pred_,label)
-                    ious.append(iou_batch)
-                    dices.append(dice_batch)
-                elif config.DATASET.NUM_CLASSES==1 and i==len(pred)-1:
-                    # ocr output
+                if config.DATASET.NUM_CLASSES>2:
+                    confusion_matrix[..., i] += get_confusion_matrix(
+                        label,
+                        x,
+                        size,
+                        config.DATASET.NUM_CLASSES,
+                        config.TRAIN.IGNORE_LABEL
+                    )
+                else:
+                    assert x.size()[1]==1
                     pred_ = x[:, 0, :, :] > 0
-                    iou_batch, dice_batch = iou_dice_binary(pred_, label)
-                    ious.append(iou_batch)
-                    dices.append(dice_batch)
+                    iou_batch, dice_batch,_ = iou_dice_binary(pred_, label)
+                    ious[i].append(iou_batch)
+                    dices[i].append(dice_batch)
 
             if idx % 10 == 0:
                 print(idx)
@@ -151,17 +144,17 @@ def validate(config, testloader, model, writer_dict):
     mean_IoUs=[]
     IoU_arrays=[]
     for i in range(nums):
-        pos = confusion_matrix[..., i].sum(1)
-        res = confusion_matrix[..., i].sum(0)
-        tp = np.diag(confusion_matrix[..., i])
         if config.DATASET.NUM_CLASSES<=2:
-            IoU_array = [np.mean(ious)]
+            IoU_array = [np.mean(ious[i])]
             mean_IoU = IoU_array[0]
-            mean_dice = np.mean(dices)
+            mean_dice = np.mean(dices[i])
             mean_IoUs.append(mean_IoU)
             IoU_arrays.append(IoU_array)
-            print("dice coefficient: ",mean_dice)
+            logging.info('dice coefficient: %.4f'%(mean_dice))
         else:
+            pos = confusion_matrix[..., i].sum(1)
+            res = confusion_matrix[..., i].sum(0)
+            tp = np.diag(confusion_matrix[..., i])
             IoU_array = (tp / np.maximum(1.0, pos + res - tp))
             mean_IoU = IoU_array.mean()
             mean_IoUs.append(mean_IoU)
@@ -183,6 +176,9 @@ def testval(config, test_dataset, testloader, model,
     confusion_matrix = np.zeros(
         (config.DATASET.NUM_CLASSES, config.DATASET.NUM_CLASSES))
     with torch.no_grad():
+        ious = []
+        dices = []
+        PAs = []
         for index, batch in enumerate(tqdm(testloader)):
             image, label, _, name = batch
             size = label.size()
@@ -202,13 +198,21 @@ def testval(config, test_dataset, testloader, model,
                     pred, size[-2:],
                     mode='bilinear', align_corners=config.MODEL.ALIGN_CORNERS
                 )
+            if config.DATASET.NUM_CLASSES>2:
+                confusion_matrix += get_confusion_matrix(
+                    label,
+                    pred,
+                    size,
+                    config.DATASET.NUM_CLASSES,
+                    config.TRAIN.IGNORE_LABEL)
+            else :
+                assert pred.size()[1] == 1
+                out = (pred[:, 0, :, :] > 0).cpu()
+                iou_batch, dice_batch,pa = iou_dice_binary(out, label)
+                ious.append(iou_batch)
+                dices.append(dice_batch)
+                PAs.append(pa)
 
-            confusion_matrix += get_confusion_matrix(
-                label,
-                pred,
-                size,
-                config.DATASET.NUM_CLASSES,
-                config.TRAIN.IGNORE_LABEL)
 
             if sv_pred:
                 sv_path = os.path.join(sv_dir, config.TEST.TESTVAL_SAVE_DIR)
@@ -218,20 +222,33 @@ def testval(config, test_dataset, testloader, model,
 
             if index % 100 == 0:
                 logging.info('processing: %d images' % index)
-                pos = confusion_matrix.sum(1)
-                res = confusion_matrix.sum(0)
-                tp = np.diag(confusion_matrix)
-                IoU_array = (tp / np.maximum(1.0, pos + res - tp))
-                mean_IoU = IoU_array.mean()
+                if config.DATASET.NUM_CLASSES>2:
+                    pos = confusion_matrix.sum(1)
+                    res = confusion_matrix.sum(0)
+                    tp = np.diag(confusion_matrix)
+                    IoU_array = (tp / np.maximum(1.0, pos + res - tp))
+                    mean_IoU = IoU_array.mean()
+                else:
+                    IoU_array = [np.mean(ious)]
+                    mean_IoU = IoU_array[0]
+                    mean_dice = np.mean(dices)
+                    logging.info('dice: %.4f' % (mean_dice))
                 logging.info('mIoU: %.4f' % (mean_IoU))
-
-    pos = confusion_matrix.sum(1)
-    res = confusion_matrix.sum(0)
-    tp = np.diag(confusion_matrix)
-    pixel_acc = tp.sum()/pos.sum()
-    mean_acc = (tp/np.maximum(1.0, pos)).mean()
-    IoU_array = (tp / np.maximum(1.0, pos + res - tp))
-    mean_IoU = IoU_array.mean()
+    if config.DATASET.NUM_CLASSES>2:
+        pos = confusion_matrix.sum(1)
+        res = confusion_matrix.sum(0)
+        tp = np.diag(confusion_matrix)
+        pixel_acc = tp.sum()/pos.sum()
+        mean_acc = (tp/np.maximum(1.0, pos)).mean()
+        IoU_array = (tp / np.maximum(1.0, pos + res - tp))
+        mean_IoU = IoU_array.mean()
+    else:
+        IoU_array = [np.mean(ious)]
+        mean_IoU = IoU_array[0]
+        mean_dice = np.mean(dices)
+        pixel_acc = np.mean(PAs)
+        mean_acc = pixel_acc
+        logging.info('final_dice: %.4f' % (mean_dice))
 
     return mean_IoU, IoU_array, pixel_acc, mean_acc
 
