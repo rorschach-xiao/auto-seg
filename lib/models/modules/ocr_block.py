@@ -12,20 +12,17 @@ from torch.autograd import Variable
 logger = logging.getLogger(__name__)
 ALIGN_CORNERS = True
 
-__all__ = ['SpatialGather_Module','SpatialOCR_Module','SpatialOCR_ASP_Module','OCRHead']
+__all__ = ['SpatialGather_Module','SpatialOCR_Module','SpatialOCR_ASP_Module','OCRHead','ASP_OCRHead']
 
 class ModuleHelper:
 
     @staticmethod
-    def BNReLU(num_features, bn_type=None, **kwargs):
+    def BNReLU(num_features, norm_layer=BatchNorm2d, **kwargs):
         return nn.Sequential(
-            BatchNorm2d(num_features, **kwargs),
+            norm_layer(num_features),
             nn.ReLU()
         )
 
-    @staticmethod
-    def BatchNorm2d(*args, **kwargs):
-        return BatchNorm2d
 
 class SpatialGather_Module(nn.Module):
     """
@@ -64,8 +61,9 @@ class _ObjectAttentionBlock(nn.Module):
     def __init__(self,
                  in_channels,
                  key_channels,
+                 norm_layer,
                  scale=1,
-                 bn_type=None):
+                 ):
         super(_ObjectAttentionBlock, self).__init__()
         self.scale = scale
         self.in_channels = in_channels
@@ -74,28 +72,28 @@ class _ObjectAttentionBlock(nn.Module):
         self.f_pixel = nn.Sequential(
             nn.Conv2d(in_channels=self.in_channels, out_channels=self.key_channels,
                 kernel_size=1, stride=1, padding=0, bias=False),
-            ModuleHelper.BNReLU(self.key_channels, bn_type=bn_type),
+            ModuleHelper.BNReLU(self.key_channels, norm_layer=norm_layer),
             nn.Conv2d(in_channels=self.key_channels, out_channels=self.key_channels,
                 kernel_size=1, stride=1, padding=0, bias=False),
-            ModuleHelper.BNReLU(self.key_channels, bn_type=bn_type),
+            ModuleHelper.BNReLU(self.key_channels, norm_layer=norm_layer)
         )
         self.f_object = nn.Sequential(
             nn.Conv2d(in_channels=self.in_channels, out_channels=self.key_channels,
                 kernel_size=1, stride=1, padding=0, bias=False),
-            ModuleHelper.BNReLU(self.key_channels, bn_type=bn_type),
+            ModuleHelper.BNReLU(self.key_channels, norm_layer=norm_layer),
             nn.Conv2d(in_channels=self.key_channels, out_channels=self.key_channels,
                 kernel_size=1, stride=1, padding=0, bias=False),
-            ModuleHelper.BNReLU(self.key_channels, bn_type=bn_type),
+            ModuleHelper.BNReLU(self.key_channels, norm_layer=norm_layer),
         )
         self.f_down = nn.Sequential(
             nn.Conv2d(in_channels=self.in_channels, out_channels=self.key_channels,
                 kernel_size=1, stride=1, padding=0, bias=False),
-            ModuleHelper.BNReLU(self.key_channels, bn_type=bn_type),
+            ModuleHelper.BNReLU(self.key_channels, norm_layer=norm_layer),
         )
         self.f_up = nn.Sequential(
             nn.Conv2d(in_channels=self.key_channels, out_channels=self.in_channels,
                 kernel_size=1, stride=1, padding=0, bias=False),
-            ModuleHelper.BNReLU(self.in_channels, bn_type=bn_type),
+            ModuleHelper.BNReLU(self.in_channels, norm_layer=norm_layer),
         )
 
     def forward(self, x, proxy):
@@ -127,12 +125,14 @@ class ObjectAttentionBlock2D(_ObjectAttentionBlock):
     def __init__(self,
                  in_channels,
                  key_channels,
+                 norm_layer,
                  scale=1,
-                 bn_type=None):
+                 ):
         super(ObjectAttentionBlock2D, self).__init__(in_channels,
                                                      key_channels,
+                                                     norm_layer,
                                                      scale,
-                                                     bn_type=bn_type)
+                                                     )
 
 class SpatialOCR_Module(nn.Module):
     """
@@ -143,19 +143,21 @@ class SpatialOCR_Module(nn.Module):
                  in_channels,
                  key_channels,
                  out_channels,
+                 norm_layer,
                  scale=1,
                  dropout=0.1,
-                 bn_type=None):
+                 ):
         super(SpatialOCR_Module, self).__init__()
         self.object_context_block = ObjectAttentionBlock2D(in_channels,
                                                            key_channels,
+                                                           norm_layer,
                                                            scale,
-                                                           bn_type)
+                                                           )
         _in_channels = 2 * in_channels
 
         self.conv_bn_dropout = nn.Sequential(
             nn.Conv2d(_in_channels, out_channels, kernel_size=1, padding=0, bias=False),
-            ModuleHelper.BNReLU(out_channels, bn_type=bn_type),
+            ModuleHelper.BNReLU(out_channels, norm_layer=norm_layer),
             nn.Dropout2d(dropout)
         )
 
@@ -173,37 +175,38 @@ class SpatialOCR_Context(nn.Module):
     We aggregate the global object representation to update the representation for each pixel.
     """
 
-    def __init__(self, in_channels, key_channels, scale=1, dropout=0, bn_type=None, ):
+    def __init__(self, in_channels, key_channels, norm_layer, scale=1, dropout=0, ):
         super(SpatialOCR_Context, self).__init__()
         self.object_context_block = ObjectAttentionBlock2D(in_channels,
                                                            key_channels,
+                                                           norm_layer,
                                                            scale,
-                                                           bn_type=bn_type)
+                                                           )
 
     def forward(self, feats, proxy_feats):
         context = self.object_context_block(feats, proxy_feats)
         return context
 
 class SpatialOCR_ASP_Module(nn.Module):
-    def __init__(self, features, hidden_features=256, out_features=512, dilations=(12, 24, 36), num_classes=19, bn_type=None, dropout=0.1):
+    def __init__(self, features, hidden_features=256, out_features=512, dilations=(12, 24, 36), num_classes=19, norm_layer=BatchNorm2d, dropout=0.1):
         super(SpatialOCR_ASP_Module, self).__init__()
 
         self.context = nn.Sequential(nn.Conv2d(features, hidden_features, kernel_size=3, padding=1, dilation=1, bias=True),
-                                     ModuleHelper.BNReLU(hidden_features, bn_type=bn_type),
+                                     ModuleHelper.BNReLU(hidden_features, norm_layer=norm_layer),
                                      SpatialOCR_Context(in_channels=hidden_features,
-                                                        key_channels=hidden_features//2, scale=1, bn_type=bn_type),
+                                                        key_channels=hidden_features//2, scale=1, norm_layer=norm_layer),
                                     )
         self.conv2 = nn.Sequential(nn.Conv2d(features, hidden_features, kernel_size=1, padding=0, dilation=1, bias=True),
-                                   ModuleHelper.BNReLU(hidden_features, bn_type=bn_type),)
+                                   ModuleHelper.BNReLU(hidden_features, norm_layer=norm_layer),)
         self.conv3 = nn.Sequential(nn.Conv2d(features, hidden_features, kernel_size=3, padding=dilations[0], dilation=dilations[0], bias=True),
-                                   ModuleHelper.BNReLU(hidden_features, bn_type=bn_type),)
+                                   ModuleHelper.BNReLU(hidden_features, norm_layer=norm_layer),)
         self.conv4 = nn.Sequential(nn.Conv2d(features, hidden_features, kernel_size=3, padding=dilations[1], dilation=dilations[1], bias=True),
-                                   ModuleHelper.BNReLU(hidden_features, bn_type=bn_type),)
+                                   ModuleHelper.BNReLU(hidden_features, norm_layer=norm_layer),)
         self.conv5 = nn.Sequential(nn.Conv2d(features, hidden_features, kernel_size=3, padding=dilations[2], dilation=dilations[2], bias=True),
-                                   ModuleHelper.BNReLU(hidden_features, bn_type=bn_type),)
+                                   ModuleHelper.BNReLU(hidden_features, norm_layer=norm_layer),)
         self.conv_bn_dropout = nn.Sequential(
             nn.Conv2d(hidden_features * 5, out_features, kernel_size=1, padding=0, dilation=1, bias=True),
-            ModuleHelper.BNReLU(out_features, bn_type=bn_type),
+            ModuleHelper.BNReLU(out_features, norm_layer=norm_layer),
             nn.Dropout2d(dropout)
             )
         self.object_head = SpatialGather_Module(num_classes)
@@ -243,12 +246,12 @@ class SpatialOCR_ASP_Module(nn.Module):
         return output
 
 class OCRHead(nn.Module):
-    def __init__(self,nclass,ocr_mid_channels,ocr_key_channels,base_outchannel=2048):
+    def __init__(self,nclass,ocr_mid_channels,ocr_key_channels,norm_layer,base_outchannel=2048):
         super(OCRHead,self).__init__()
         self.conv3x3_ocr = nn.Sequential(
             nn.Conv2d(base_outchannel, ocr_mid_channels,
                       kernel_size=3, stride=1, padding=1),
-            BatchNorm2d(ocr_mid_channels),
+            norm_layer(ocr_mid_channels),
             nn.ReLU(inplace=relu_inplace),
         )
 
@@ -259,6 +262,7 @@ class OCRHead(nn.Module):
                                                  out_channels=ocr_mid_channels,
                                                  scale=1,
                                                  dropout=0.05,
+                                                 norm_layer=norm_layer
                                                  )
         self.cls_head = nn.Conv2d(
             ocr_mid_channels, nclass, kernel_size=1, stride=1, padding=0, bias=True)
@@ -273,18 +277,19 @@ class OCRHead(nn.Module):
         return ocr_out
 
 class ASP_OCRHead(nn.Module):
-    def __init__(self,nclass,ocr_mid_channels=256,ocr_key_channels=256,base_outchannel=2048):
+    def __init__(self,nclass,ocr_mid_channels=256,ocr_key_channels=256,norm_layer=BatchNorm2d,base_outchannel=2048):
         super(ASP_OCRHead,self).__init__()
         self.asp_ocr_head = SpatialOCR_ASP_Module(features=base_outchannel,
                                                   hidden_features=ocr_key_channels,
                                                   out_features=ocr_mid_channels,
                                                   num_classes=nclass,
+                                                  norm_layer=norm_layer
                                                   )
 
         self.head = nn.Conv2d(ocr_mid_channels, nclass, kernel_size=1, stride=1, padding=0, bias=True)
         self.dsn_head = nn.Sequential(
             nn.Conv2d(1024, 512, kernel_size=3, stride=1, padding=1),
-            ModuleHelper.BNReLU(512),
+            ModuleHelper.BNReLU(512,norm_layer=norm_layer),
             nn.Dropout2d(0.1),
             nn.Conv2d(512, nclass, kernel_size=1, stride=1, padding=0, bias=True)
         )

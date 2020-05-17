@@ -15,7 +15,7 @@ class ASP_OCRNet(BaseNet):
         ocr_mid_channels = config.MODEL.OCR.MID_CHANNELS #256
         ocr_key_channels = config.MODEL.OCR.KEY_CHANNELS #256
         self.aux = aux
-        self.asp_ocr = ASP_OCRHead(config.DATASET.NUM_CLASSES, ocr_mid_channels, ocr_key_channels,
+        self.asp_ocr = ASP_OCRHead(config.DATASET.NUM_CLASSES, ocr_mid_channels, ocr_key_channels,norm_layer=self.norm_layer,
                            base_outchannel=self.base_outchannel)
         self.aux_layer = nn.Sequential(nn.Conv2d(1024, 512, 3, padding=1, bias=False),
                                        self.norm_layer(512),

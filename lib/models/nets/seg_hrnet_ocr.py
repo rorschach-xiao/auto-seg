@@ -15,7 +15,7 @@ class HRNet_OCR(BaseNet):
         self.last_input_channel = last_input_channel
         ocr_mid_channels = config.MODEL.OCR.MID_CHANNELS
         ocr_key_channels = config.MODEL.OCR.KEY_CHANNELS
-        self.ocr = OCRHead(config.DATASET.NUM_CLASSES, ocr_mid_channels, ocr_key_channels,
+        self.ocr = OCRHead(config.DATASET.NUM_CLASSES, ocr_mid_channels, ocr_key_channels,norm_layer=self.norm_layer,
                            base_outchannel=self.last_input_channel)
 
         self.aux_head = nn.Sequential(

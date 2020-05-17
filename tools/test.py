@@ -60,6 +60,7 @@ def main():
         module.BatchNorm2d_class = module.BatchNorm2d = torch.nn.BatchNorm2d
         module = eval('models.backbone.basenet')
         module.BatchNorm2d_class = module.BatchNorm2d = torch.nn.BatchNorm2d
+        module = eval('')
     model = eval('models.nets.' + config.MODEL.NAME +
                  '.get_seg_model')(config)
     gpus = list(config.GPUS)

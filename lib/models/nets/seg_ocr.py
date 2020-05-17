@@ -15,7 +15,7 @@ class OCRNet(BaseNet):
         ocr_mid_channels = config.MODEL.OCR.MID_CHANNELS
         ocr_key_channels = config.MODEL.OCR.KEY_CHANNELS
         self.aux = aux
-        self.ocr = OCRHead(config.DATASET.NUM_CLASSES, ocr_mid_channels, ocr_key_channels,
+        self.ocr = OCRHead(config.DATASET.NUM_CLASSES, ocr_mid_channels, ocr_key_channels,norm_layer=self.norm_layer,
                            base_outchannel=self.base_outchannel)
         self.aux_layer = nn.Sequential(nn.Conv2d(1024, 512, 3, padding=1, bias=False),
                                        self.norm_layer(512),
