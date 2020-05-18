@@ -295,7 +295,7 @@ def get_val_transform(config):
     trans_list = []
     trans_para_dict = {
         'crop': {'size': [config.TRAIN.IMAGE_SIZE[1], config.TRAIN.IMAGE_SIZE[0]],
-                 'crop_type': 'rand', 'padding': mean,
+                 'crop_type': 'center', 'padding': mean,
                  'ignore_label': config.TRAIN.IGNORE_LABEL},
         'totensor': {},
         'normalize': {'mean': mean, 'std': std},

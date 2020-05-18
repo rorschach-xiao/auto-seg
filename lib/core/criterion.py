@@ -505,19 +505,23 @@ def iou_dice_binary(preds, labels, EMPTY=1., ignore=255, per_image=True):
         preds, labels = (preds,), (labels,)
     ious = []
     dices = []
+    pixel_accs = []
     for pred, label in zip(preds, labels):
         intersection = ((label == 1) & (pred == 1)).sum()
         union = ((label == 1) | ((pred == 1) & (label != ignore))).sum()
+        pa = (label == pred).sum()/(label!=ignore).sum()
         if not union:
             iou = EMPTY
             dice = EMPTY
         else:
             iou = float(intersection) / float(union)
             dice = 2*float(intersection) / (float(union)+float(intersection))
+        pixel_accs.append(pa)
         dices.append(dice)
         ious.append(iou)
     iou = mean(ious)  # mean accross images if per_image
     dice = mean(dices)
-    return iou,dice
+    pixel_acc = mean(pixel_accs)
+    return iou,dice,pixel_acc
 
 

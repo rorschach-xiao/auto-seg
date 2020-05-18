@@ -91,9 +91,9 @@ class Cityscapes(BaseDataset):
         palette = self.get_palette(256)
         preds = np.asarray(np.argmax(preds.cpu(), axis=1), dtype=np.uint8)
         for i in range(preds.shape[0]):
-            pred_color = self.convert_label(preds[i], inverse=True)
-            pred = preds[i]
+            pred = preds[i]  # label from 0 to 18
             save_img = Image.fromarray(pred)
+            pred_color = self.convert_label(preds[i], inverse=True)
             save_img.save(os.path.join(sv_path, name[i] + '.png'))
             save_color_img = Image.fromarray(pred_color)
             save_color_img.putpalette(palette)

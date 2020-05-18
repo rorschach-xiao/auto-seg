@@ -16,11 +16,11 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 
-from lib.utils.utils import AverageMeter
-from lib.utils.utils import get_confusion_matrix
-from lib.utils.utils import adjust_learning_rate
+from utils.utils import AverageMeter
+from utils.utils import get_confusion_matrix
+from utils.utils import adjust_learning_rate
 
-import lib.utils.distributed as dist
+import utils.distributed as dist
 from .criterion import iou_dice_binary
 
 def reduce_tensor(inp):

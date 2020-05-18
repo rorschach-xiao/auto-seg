@@ -43,7 +43,7 @@ TRAIN:
   TRANS_LIST: ['random_scale',
                'random_rotate',
                'random_blur',
-               'random_flip',
+               'random_hflip',
                'crop',
                'totensor',
                'normalize']
