@@ -6,7 +6,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from lib.models.tools.bn_helper import BatchNorm2d, BatchNorm2d_class, relu_inplace
+from models.tools.bn_helper import BatchNorm2d, BatchNorm2d_class, relu_inplace
 from torch.autograd import Variable
 
 logger = logging.getLogger(__name__)
