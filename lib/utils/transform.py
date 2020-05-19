@@ -284,7 +284,7 @@ def get_train_transform(config):
                  'ignore_label': config.TRAIN.IGNORE_LABEL},
         'totensor': {},
         'normalize': {'mean': mean, 'std': std},
-        'resize': {'size': [config.TRAIN.IMAGE_SIZE[1], config.TRAIN.IMAGE_SIZE[0]]}
+        'resize': {'size': (config.TRAIN.IMAGE_SIZE[0], config.TRAIN.IMAGE_SIZE[1])}
     }
     for trans in config.TRAIN.TRANS_LIST:
         if trans in trans_dict:
@@ -299,7 +299,7 @@ def get_val_transform(config):
                  'ignore_label': config.TRAIN.IGNORE_LABEL},
         'totensor': {},
         'normalize': {'mean': mean, 'std': std},
-        'resize': {'size': [config.TRAIN.IMAGE_SIZE[1], config.TRAIN.IMAGE_SIZE[0]]}
+        'resize': {'size': (config.TRAIN.IMAGE_SIZE[0], config.TRAIN.IMAGE_SIZE[1])}
     }
     for trans in config.VAL.TRANS_LIST:
         if trans in trans_dict:
@@ -311,7 +311,7 @@ def get_test_transform(config):
     trans_para_dict = {
         'totensor': {},
         'normalize': {'mean': mean, 'std': std},
-        'resize': {'size': [config.TEST.IMAGE_SIZE[1], config.TEST.IMAGE_SIZE[0]]}
+        'resize': {'size': (config.TEST.IMAGE_SIZE[0], config.TEST.IMAGE_SIZE[1])}
     }
     for trans in config.TEST.TRANS_LIST:
         if trans in trans_dict:

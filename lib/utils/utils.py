@@ -14,7 +14,7 @@ import time
 from pathlib import Path
 
 import numpy as np
-
+from config import config
 import torch
 import torch.nn as nn
 
@@ -109,8 +109,12 @@ def get_confusion_matrix(label, pred, size, num_class, ignore=-1):
     """
     Calcute the confusion matrix by given label and pred
     """
+    num_class = max(2,num_class)
     output = pred.cpu().numpy().transpose(0, 2, 3, 1)
-    seg_pred = np.asarray(np.argmax(output, axis=3), dtype=np.uint8)
+    if config.DATASET.NUM_CLASSES==1:
+        seg_pred = np.asarray(output[:,:,:,0]>0, dtype=np.uint8)
+    else:
+        seg_pred = np.asarray(np.argmax(output, axis=3), dtype=np.uint8)
     seg_gt = np.asarray(
     label.cpu().numpy()[:, :size[-2], :size[-1]], dtype=np.int)
 
