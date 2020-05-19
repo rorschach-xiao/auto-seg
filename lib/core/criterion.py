@@ -509,7 +509,7 @@ def iou_dice_binary(preds, labels, EMPTY=1., ignore=255, per_image=True):
     for pred, label in zip(preds, labels):
         intersection = ((label == 1) & (pred == 1)).sum()
         union = ((label == 1) | ((pred == 1) & (label != ignore))).sum()
-        pa = (label == pred).sum()/(label!=ignore).sum()
+        pa = (label == pred.long()).sum().float()/(label!=ignore).sum().float()
         if not union:
             iou = EMPTY
             dice = EMPTY
