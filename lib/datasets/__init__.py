@@ -17,5 +17,6 @@ from .carvana import CarvanaDataset as carvana
 from .inria import InriaDataset as inria
 from .apsis import APSISDataset as apsis
 from .Magnetic import MagneticDataset as Magnetic
+from .optic import OPTIC as optic
 
 
