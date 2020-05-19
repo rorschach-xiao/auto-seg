@@ -52,7 +52,6 @@ TRAIN:
                'totensor',
                'normalize']
   IGNORE_LABEL: 255
-  SCALE_FACTOR: 16
   NONBACKBONE_KEYWORDS: ['asp_ocr','aux_layer']
 
 TEST:

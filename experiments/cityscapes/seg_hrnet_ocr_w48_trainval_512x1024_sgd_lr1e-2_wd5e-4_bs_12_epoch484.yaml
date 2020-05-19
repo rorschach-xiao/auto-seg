@@ -50,7 +50,6 @@ TRAIN:
                'totensor',
                'normalize']
   IGNORE_LABEL: 255
-  SCALE_FACTOR: 16
 VAL:
   TRANS_LIST: ['crop',
                'totensor',

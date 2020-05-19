@@ -29,28 +29,31 @@ LOSS:
 TRAIN:
   IMAGE_SIZE:
   - 600
-  - 600
+  - 800
   BASE_SIZE: 800
   BATCH_SIZE_PER_GPU: 2
   SHUFFLE: true
   BEGIN_EPOCH: 0
-  END_EPOCH: 100
+  END_EPOCH: 80
   RESUME: true
   OPTIMIZER: adam
   LR: 0.001
   WD: 0.0001
   MOMENTUM: 0.9
   NESTEROV: false
-  TRANS_LIST: ['random_rotate',
+  TRANS_LIST: ['random_scale',
+               'random_rotate',
                'random_blur',
                'random_hflip',
-               'crop'
+               'crop',
                'totensor',
                'normalize']
-  RANDOM_ANGLE_DEGREE: 10
+  RANDOM_ANGLE_DEGREE: 20
+  RANDOM_SCALE_MIN: 0.5
+  RANDOM_SCALE_MAX: 1.5
 
 VAL:
-  TRANS_LIST: ['resize',
+  TRANS_LIST: ['crop',
                'totensor',
                'normalize']
 TEST:
@@ -58,6 +61,6 @@ TEST:
   - 512
   - 512
   BASE_SIZE: 512
-  BATCH_SIZE_PER_GPU: 10
+  BATCH_SIZE_PER_GPU: 2
   FLIP_TEST: true
   MULTI_SCALE: true
