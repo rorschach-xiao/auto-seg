@@ -95,14 +95,14 @@ _C.TRAIN.MULTI_SCALE = True
 _C.TRAIN.TRANS_LIST = ['random_scale',
                        'random_rotate',
                        'random_blur',
-                       'random_flip',
+                       'random_hflip',
                        'crop',
                        'totensor',
                        'normalize']
 _C.VAL = CN()
 _C.VAL.TRANS_LIST = ['crop','totensor','normalize']
 
-_C.TRAIN.RANDOM_BRIGHTNESS_SHIFT_VALUE = 10
+
 _C.TRAIN.RANDOM_ANGLE_DEGREE=10
 _C.TRAIN.RANDOM_SCALE_MIN=0.5
 _C.TRAIN.RANDOM_SCALE_MAX=2.0

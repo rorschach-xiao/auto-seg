@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.functional as F
 from ..backbones.basenet import BaseNet
 from ..modules.ocr_block import SpatialGather_Module,SpatialOCR_Module,OCRHead
+from config.models import MODEL_CONFIGS
 
 import logging
 
@@ -40,5 +41,6 @@ class HRNet_OCR(BaseNet):
         return out_aux_seg
 
 def get_seg_model(cfg, **kwargs):
-    model = HRNet_OCR(cfg,**kwargs)
+    last_input_channel = sum(MODEL_CONFIGS[cfg.MODEL.BACKBONE].STAGE4.NUM_CHANNELS)
+    model = HRNet_OCR(cfg,last_input_channel=last_input_channel,**kwargs)
     return model
