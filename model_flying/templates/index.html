@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+
+    <script type=text/javascript src="{{ url_for('static', filename='jquery-3.4.1.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='jquery.form.js') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap/css/bootstrap.css') }}" >
+    <script type="text/javascript" src="{{ url_for('static', filename='bootstrap/js/bootstrap.js') }}"></script>
+
+    <script type="text/javascript">
+        $(function (){
+            //upload train dataset
+            $("#upload_train").click(function(){
+                var filepath = $("#file_train").val();
+                if (!isZip(filepath)){
+                    return false;
+                }
+                //debugger
+                $('#uploadFile_train').ajaxSubmit({
+                    type:'post',
+                    url:"classify/upload/train",
+                    processData: false, //需设置为false,因为data值是FormData对象，不需要对数据做处理
+                    contentType: false,
+                    resetForm: true,  //成功提交后，是否重置所有表单元素的值
+                    uploadProgress: function (event, position, total, percentComplete) {
+                        if(percentComplete > 100){
+                            percentComplete = 100;
+                        }
+                        var percentVal = percentComplete + '%';
+                        $("#uploadFile_rate_train").html(percentVal);
+                        $("#uploadFile_progressBar_train").width(percentVal);
+                    },
+                   success:function(result){
+                        console.log(result)
+                        var log = "上传文件成功！";
+                        if (result.return != "success"){
+                            log = "上传文件失败: " + result.return;
+                        }
+                        alert(log);
+                        $("#uploadFile_progressBar_trian").width("0px"); // 进度条状态
+                        $("#uploadFile_rate_train").html("0%");
+                    },
+                    error:function(){
+                        alert("上传文件失败，请重试！");
+                    }
+                });
+            });
+
+            //upload test dataset
+            $("#upload_test").click(function(){
+                var filepath = $("#file_test").val();
+                if (!isZip(filepath)){
+                    return false;
+                }
+                //debugger
+                $('#uploadFile_test').ajaxSubmit({
+                    type:'post',
+                    url:"classify/upload/test",
+                    processData: false, //需设置为false,因为data值是FormData对象，不需要对数据做处理
+                    contentType: false,
+                    resetForm: true,  //成功提交后，是否重置所有表单元素的值
+                    uploadProgress: function (event, position, total, percentComplete) {
+                        if(percentComplete > 100){
+                            percentComplete = 100;
+                        }
+                        var percentVal = percentComplete + '%';
+                        $("#uploadFile_rate_test").html(percentVal);
+                        $("#uploadFile_progressBar_test").width(percentVal);
+                    },
+                    success:function(result){
+                        console.log(result)
+                        var log = "上传文件成功！";
+                        if (result.return != "success"){
+                            log = "上传文件失败: " + result.return;
+                        }
+                        alert(log);
+                    },
+                    error:function(){
+                        alert("上传文件失败，请重试！");
+                    }
+                });
+
+            });
+
+            $("#file_inference").change(function(){
+                $("#preview").attr("src",URL.createObjectURL($(this)[0].files[0]));
+            });
+
+
+            //inference
+            $("#upload_inference").click(function(){
+                var filepath = $("#file_inference").val();
+                if (!isImage(filepath)){
+                    return false;
+                }
+                console.log(filepath)
+
+
+                $.ajax({
+                    url: "classify/get_status",
+                    type: "GET",
+                    contentType: "application/json;charset=utf-8",
+                    dataType: "text",
+                    success: function (result) {
+                        result = $.parseJSON(result);
+                        if (result.return == "training"){
+                            alert("模型正在训练中，请在训练完后再提交推理");
+                            return;
+                        }
+                        else if (result.return == "testing"){
+                            alert("模型正在测试中，请在测试完成后再提交推理");
+                            return;
+                        }
+                        else if(result.return != "trained"){
+                            alert("模型尚未训练过，请先提交训练任务");
+                            return;
+                        }
+                        console.log(result)
+
+                        $('#inference').ajaxSubmit({
+                        type:'post',
+                        url:"classify/inference",
+                        processData: false,
+                        contentType: false,
+                        resetForm: true,
+                        success:function(result){
+                            if (result.return == "success") {
+                                $('#inference_text').html("推理完成，下面是推理结果:\n" + result.predict);
+                            }
+                            else {
+                                $('#inference_text').html("推理失败! 请检查错误或联系管理员:\n" + result.return);
+                            }
+                        },
+                        error:function(){
+                            $('#inference_text').html("训练请求发送失败！\n请检查错误或联系管理员");
+                        }
+                        });
+                },
+                error: function (msg) {
+                    $('#train_text').html('Error:' + msg)
+                }
+                });
+            });
+
+        });
+    </script>
+
+    <script type=text/javascript>
+        $(function() {
+            $.ajax({
+                url: "classify/get_status",
+                type: "GET",
+                contentType: "application/json;charset=utf-8",
+                dataType: "text",
+                success: function (result) {
+                    var status = "模型正在训练中，训练时间较长，查看训练结果，请刷新页面";
+                    result = $.parseJSON(result);
+                    console.log(result);
+                    if (result.return == "trained") {
+                        status = "模型训练完成，可以进行批量测试或者推理"
+                    }
+                    else if(result.return == "non-trained"){
+                        status = "模型尚未训练";
+                    }
+                    else if(result.return == "error") {
+                        status = "训练失败！\n请检查错误或联系管理员"
+                    }
+                    $('#train_text').html(status)
+                },
+                error: function (msg) {
+                    $('#train_text').html("训练请求发送失败！\n请检查错误或联系管理员");
+                }
+            });
+        });
+    </script>
+
+
+    <script>
+        function ask_train_status() {
+            $.ajax({
+                url: "classify/get_status",
+                type: "GET",
+                contentType: "application/json;charset=utf-8",
+                dataType: "text",
+                success: function (result) {
+                    result = $.parseJSON(result);
+                    if (result.return == "trained") {
+                        $('#train_text').html("模型训练完成，可以进行批量测试或者推理");
+                    }
+                    else if (result.return == "training") {
+                        setTimeout("ask_train_status()", 60000);
+                    }
+                    else if (result.return == "non-trained") {
+                        $('#train_text').html("训练请求发送失败！\n请检查错误或联系管理员");
+                    }
+                },
+            });
+        }
+
+        function ask_test_status() {
+            $.ajax({
+                url: "classify/get_status",
+                type: "GET",
+                contentType: "application/json;charset=utf-8",
+                dataType: "text",
+                success: function (result) {
+                    result = $.parseJSON(result);
+                    if (result.return == "testing") {
+                        setTimeout("ask_test_status()", 30000);
+                    }
+                    else if (result.return == "tested") {
+                        $('#test_text').html("测试完成，下面是测试结果:\n" + result.records);
+                    }
+                    else if (result.return == "trained"){
+                        $('#test_text').html("训练请求发送失败！\n请检查错误或联系管理员");
+                    }
+                },
+            });
+        }
+
+        function start_train() {
+            $.ajax({
+                url: "classify/get_status",
+                type: "GET",
+                contentType: "application/json;charset=utf-8",
+                dataType: "text",
+                success: function (result) {
+                    result = $.parseJSON(result);
+                    if (result.return == "training"){
+                        alert("模型正在训练中，请勿重复提交");
+                        return;
+                    }
+                    else if (result.return == "testing"){
+                        alert("模型正在测试中，请完成后再提交新的训练");
+                        return;
+                    }
+
+                    $.ajax({
+                        url : "classify/train",
+                        type : "POST",
+                        async : true,
+                        contentType: "application/json;charset=utf-8",
+                        dataType : "text",
+                        success : function(result) {
+                                result = $.parseJSON(result);
+                                console.log(result)
+                                if (result.return == "success") {
+                                    $('#train_text').html("模型训练完成，可以进行批量测试或者推理");
+                                }
+                                else if (result.return == "no data"){
+                                    $('#train_text').html("请先上传数据");
+                                }
+                                else {
+                                    $('#test_text').html("训练请求发送失败！\n请检查错误或联系管理员\n" + result.return);
+                                }
+                            }
+                    });
+                    $('#train_text').html("训练任务已提交，训练时间较长，查看训练结果，请刷新页面");
+
+                    setTimeout("ask_train_status()", 10000);
+                },
+                error: function (msg) {
+                    $('#train_text').html("训练请求发送失败！\n请检查错误或联系管理员");
+                }
+            });
+        }
+
+
+        function start_test() {
+            $.ajax({
+                url: "classify/get_status",
+                type: "GET",
+                contentType: "application/json;charset=utf-8",
+                timeout: 0,
+                dataType: "text",
+                success: function (result) {
+                    result = $.parseJSON(result);
+                    if (result.return == "training"){
+                        alert("模型正在训练中，请训练完成后再提交测试任务");
+                        return;
+                    }
+                    else if (result.return == "testing"){
+                        alert("模型正在测试中，请勿重复提交测试任务");
+                        return;
+                    }
+                    else if (result.return == "non-trained"){
+                        alert("模型尚未训练过，请先提交训练任务");
+                        return;
+                    }
+
+                    $.ajax({
+                        url : "classify/test",
+                        type : "POST",
+                        contentType: "application/json;charset=utf-8",
+                        {#async : true,#}
+                        dataType : "text",
+                        timeout: 0,
+                        success : function(result) {
+                                result = $.parseJSON(result);
+                                console.log(result)
+                                if (result.return == "success") {
+                                    $('#test_text').html("模型测试完成，下面是测试结果:\n" + result.records);
+                                }
+                                else if (result.return == "no data"){
+                                    $('#test_text').html("请先上传测试数据");
+                                }
+                                else {
+                                    $('#test_text').html("测试失败！\n请检查错误或联系管理员\n" + result.return);
+                                }
+                            }
+                    });
+                    $('#test_text').html("测试任务已提交，请勿刷新页面，否则测试结果无法显示！！！");
+
+                    setTimeout("ask_test_status()", 10000);
+                },
+                error: function (msg) {
+                    $('#test_text').html('Error:' + msg)
+                }
+            });
+        }
+    </script>
+
+    <script>
+        function isZip(filepath) {
+            var extStart = filepath.lastIndexOf(".");
+            var ext = filepath.substring(extStart, filepath.length).toUpperCase();
+            if (ext != ".ZIP") {
+                alert("数据只能是Zip包文件!");
+                return false;
+            }
+            return true;
+        }
+
+        function isImage(filepath) {
+            var extStart = filepath.lastIndexOf(".");
+            var ext = filepath.substring(extStart, filepath.length).toUpperCase();
+            if (ext != '.JPEG' && ext != '.JPG' && ext != '.PNG' ) {
+                alert("图片格式只能是JPG或者PNG格式文件!");
+                return false;
+            }
+            return true;
+        }
+    </script>
+</head>
+
+<style>
+    body{
+        width: 100%;
+        height: 100%;
+    }
+</style>
+
+{#<body style="background-image: url(/static/AI.png);background-size: 100%">#}
+<body>
+    <h1 style="text-align: center">AutoCV自助训练、验证系统</h1>
+
+    <br>
+
+    <h2 style="text-align: center">训    练</h2>
+    <hr>
+    <br>
+    <div style="text-align: center">
+        <form id="uploadFile_train" action="classify/upload/train" enctype="multipart/form-data">
+            <input type="file" name="file_train" id="file_train">
+            <input type="button" value="上传训练数据集" id="upload_train">
+        </form>
+        <p></p>
+        <div class="progress" style="width: 700px;margin: auto">
+            <div style="width: 60px">上传进度:</div>&nbsp;
+            <div id="uploadFile_progressBar_train" class="progress-bar" role="progressbar" aria-valuenow="60"
+                aria-valuemin="0" aria-valuemax="100" style="min-width: 2em;max-width: 640px">
+                <span id="uploadFile_rate_train">0%</span>
+            </div>
+        </div>
+        <br>
+        <div>
+            <button onclick = "start_train()">开始训练</button>
+        </div>
+        <br>
+        <textarea id="train_text" name="train_text" cols="60"
+                  rows="5" readonly="true" style = "resize:none;overflow:scroll;color:#747474"></textarea>
+    </div>
+
+    <br>
+    <br>
+    <h2 style="text-align: center">测    试</h2>
+    <hr>
+
+        <div style="text-align: center">
+        <form id="uploadFile_test" action="classify/upload/test" enctype="multipart/form-data" >
+            <input type="file" name="file_test" id = "file_test">
+            <input type="button" value="上传测试数据集" id="upload_test">
+        </form>
+        <p></p>
+        <div class="progress" style="width: 700px;margin: auto">
+            <div id="uploadFile_progressBar_test" class="progress-bar" role="progressbar" aria-valuenow="60"
+                aria-valuemin="0" aria-valuemax="100" style="min-width: 2em;">
+                <span id="uploadFile_rate_test">0%</span>
+            </div>
+        </div>
+            <br>
+        <div>
+            <button onclick = "start_test()">开始测试</button>
+        </div>
+        <br>
+        <textarea id="test_text" name="test_text" cols="60"
+                  rows="5" readonly="true" style = "resize:none;overflow:scroll;color:#747474"></textarea>
+
+    </div>
+
+    <br>
+    <h2 style="text-align: center">推        理</h2>
+    <hr>
+
+    <div style="text-align: center">
+        <form id="inference" action="classify/inference" enctype="multipart/form-data" >
+            <input type="file" name="file_inference" id = "file_inference">
+            <input type="button" value="开始推理" id="upload_inference">
+        </form>
+        <br>
+        <div style="margin: auto;width: 650px">
+            <div class="image_container" style="float:left;margin: auto">
+                <img src="" id = "preview", style="height:190px;width:210px;border-width:0px;">
+            </div>
+
+            <div style="float:right;margin: auto">
+                <textarea id="inference_text" name="test_text" cols="50"
+                      rows="7" readonly="true" style = "resize:none;overflow:scroll;color:#747474"></textarea>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
