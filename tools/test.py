@@ -13,7 +13,8 @@ import torch.nn as nn
 import torch.backends.cudnn as cudnn
 
 import _init_paths
-
+import models
+import datasets
 from config import config
 from config import update_config
 from core.function import testval, test
@@ -60,7 +61,8 @@ def main():
         module.BatchNorm2d_class = module.BatchNorm2d = torch.nn.BatchNorm2d
         module = eval('models.backbone.basenet')
         module.BatchNorm2d_class = module.BatchNorm2d = torch.nn.BatchNorm2d
-        module = eval('')
+        module = eval('models.backbone.hrnet')
+        module.BatchNorm2d_class = module.BatchNorm2d = torch.nn.BatchNorm2d
     model = eval('models.nets.' + config.MODEL.NAME +
                  '.get_seg_model')(config)
     gpus = list(config.GPUS)
@@ -111,7 +113,8 @@ def main():
         mean_IoU, IoU_array, pixel_acc, mean_acc = testval(config,
                                                            test_dataset,
                                                            testloader,
-                                                           model)
+                                                           model,
+                                                           sv_dir=final_output_dir)
 
         msg = 'MeanIU: {: 4.4f}, Pixel_Acc: {: 4.4f}, \
             Mean_Acc: {: 4.4f}, Class IoU: '.format(mean_IoU,
