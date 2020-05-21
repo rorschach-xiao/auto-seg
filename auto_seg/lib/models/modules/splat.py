@@ -25,13 +25,13 @@ class SplAtConv2d(Module):
         self.cardinality = groups
         self.channels = channels
         self.dropblock_prob = dropblock_prob
-        if self.rectify:
-            from rfconv import RFConv2d
-            self.conv = RFConv2d(in_channels, channels*radix, kernel_size, stride, padding, dilation,
-                                 groups=groups*radix, bias=bias, average_mode=rectify_avg, **kwargs)
-        else:
-            self.conv = Conv2d(in_channels, channels*radix, kernel_size, stride, padding, dilation,
-                               groups=groups*radix, bias=bias, **kwargs)
+        # if self.rectify:
+        #     from rfconv import RFConv2d
+        #     self.conv = RFConv2d(in_channels, channels*radix, kernel_size, stride, padding, dilation,
+        #                          groups=groups*radix, bias=bias, average_mode=rectify_avg, **kwargs)
+        # else:
+        self.conv = Conv2d(in_channels, channels*radix, kernel_size, stride, padding, dilation,
+                           groups=groups*radix, bias=bias, **kwargs)
         self.use_bn = norm_layer is not None
         if self.use_bn:
             self.bn0 = norm_layer(channels*radix)
@@ -40,8 +40,8 @@ class SplAtConv2d(Module):
         if self.use_bn:
             self.bn1 = norm_layer(inter_channels)
         self.fc2 = Conv2d(inter_channels, channels*radix, 1, groups=self.cardinality)
-        if dropblock_prob > 0.0:
-            self.dropblock = DropBlock2D(dropblock_prob, 3)
+        # if dropblock_prob > 0.0:
+        #     self.dropblock = DropBlock2D(dropblock_prob, 3)
         self.rsoftmax = rSoftMax(radix, groups)
 
     def forward(self, x):
