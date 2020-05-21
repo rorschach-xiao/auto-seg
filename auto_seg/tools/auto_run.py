@@ -184,11 +184,15 @@ def train(data_root,record_root,cuda_visible_devices='0,1'):
 
 
 def test(data_root,output_root,cuda_visible_devices='0,1'):
+
     if not os.path.exists(os.path.join(output_root,'param.json')):
         raise FileNotFoundError('can not find param.json')
     with open(os.path.join(output_root,'param.json'),'r') as f:
         param_dict = json.load(f)
     os.environ['CUDA_VISIBLE_DEVICES'] = cuda_visible_devices
+
+    AutoTestor.Creat_Logger(output_dir=output_root, phase='test')
+    AutoTestor.logger.info(pprint.pformat(config))
 
     # 更新test config
     config.GPUS = [0,1]
@@ -207,9 +211,6 @@ def test(data_root,output_root,cuda_visible_devices='0,1'):
     else:
         config.MODEL.NUM_OUTPUTS = 2
 
-
-    AutoTestor.Creat_Logger(output_dir=output_root,phase='test')
-    AutoTestor.logger.info(pprint.pformat(config))
 
     # 设置cudnn
     cudnn.benchmark = True
