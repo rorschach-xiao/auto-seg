@@ -227,7 +227,7 @@ class AutoTrainer():
         nclass = -1
         for idx, batch in enumerate(dataloader):
             image, label, _, _ = batch
-            ori_h,ori_w = image.shape
+            _,ori_h,ori_w,_ = image.shape
             label_uni = np.unique(label)
             nclass = max(nclass,label_uni[-1] if label_uni[-1]!=ignore_label else label_uni[-2]) # update num_class
             avg_h = (avg_h*idx+ori_h)/(idx+1) # update avg_h,avg_w
@@ -278,7 +278,7 @@ class AutoTrainer():
         for epoch in range(0, end_epoch):
             train(config, epoch, end_epoch,
                   epoch_iters, lr, num_iters,
-                  AutoTrainer.dataloader, AutoTrainer.optimizer, AutoTrainer.model, writer_dict)
+                  AutoTrainer.trainloader, AutoTrainer.optimizer, AutoTrainer.model, writer_dict)
             valid_loss, mean_IoU, IoU_array = validate(config,
                                                        AutoTrainer.valloader, AutoTrainer.model, writer_dict)
 

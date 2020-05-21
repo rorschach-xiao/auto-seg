@@ -92,8 +92,11 @@ def validate(config, testloader, model, writer_dict):
     model.eval()
     ave_loss = AverageMeter()
     nums = config.MODEL.NUM_OUTPUTS
-    confusion_matrix = np.zeros(
-        (config.DATASET.NUM_CLASSES, config.DATASET.NUM_CLASSES, nums))
+    if config.DATASET.NUM_CLASSES==1:
+        confusion_matrix = np.zeros((2,2,nums))
+    else:
+        confusion_matrix = np.zeros(
+            (config.DATASET.NUM_CLASSES, config.DATASET.NUM_CLASSES, nums))
     with torch.no_grad():
         for idx, batch in enumerate(testloader):
             image, label, _, _ = batch

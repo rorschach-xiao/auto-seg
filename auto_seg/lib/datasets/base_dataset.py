@@ -23,7 +23,7 @@ class BaseDataset(data.Dataset):
         self.std = std
         self.num_classes = num_classes
         self.list_path = list_path
-        self.img_list = [line.strip().split() for line in open(root + list_path)]
+        self.img_list = [line.strip().split() for line in open(os.path.join(root + list_path))]
         self.class_weights = None
         self.files = self.read_files()
         if num_samples:

@@ -12,16 +12,17 @@ import logging
 import pprint
 import json
 from config import config
-
+import datasets
+from datasets.base_dataset import BaseDataset
 
 from .auto_helper import *
-from datasets.base_dataset import BaseDataset
 from tensorboardX import SummaryWriter
 
 
 def train_main_worker(local_rank,
                       world_size,
                       data_root,
+                      record_root,
                       num_class,
                       crop_size = (512,512),
                       epoch = 40,
@@ -83,6 +84,17 @@ def train_main_worker(local_rank,
     if  config.MODEL.NUM_OUTPUTS == 2:
         config.LOSS.BALANCE_WEIGHTS = [0.4, 1]
 
+    # 创建logger并生成输出路径
+
+    config.OUTPUT_DIR = record_root
+    AutoTrainer.Creat_Logger(cfg=config, phase='train')
+    AutoTrainer.logger.info(config)
+
+    train_param_dict = {'crop_size': list(crop_size), 'nclass': int(num_class), 'backbone': backbone, 'net': model_name}
+
+    with open(os.path.join(AutoTrainer.final_output_dir, "param.json"), "w") as f:
+        json.dump(train_param_dict, f)
+        print("save param file at %s successfully!" % (AutoTrainer.final_output_dir))
 
     writer_dict = {
         'writer': SummaryWriter(AutoTrainer.tb_log_dir),
@@ -106,7 +118,6 @@ def train_main_worker(local_rank,
     os.environ['MASTER_ADDR'] = '127.0.0.1'
     os.environ['MASTER_PORT'] = str(port)
 
-    os.environ['CUDA_VISIBLE_DEVICES'] = cuda_visible_devices
 
     # 数据准备
     batch_size = batch_size_per_gpu * len(gpus)
@@ -133,15 +144,19 @@ def train_main_worker(local_rank,
                             writer_dict=writer_dict,
                             )
 def train(data_root,record_root,cuda_visible_devices='0,1'):
+    os.environ['CUDA_VISIBLE_DEVICES'] = cuda_visible_devices
+
     train_dataset = eval('datasets.custom')(
         root=data_root,
         list_path='train.txt',
         num_samples=None,
         transform=None)
+
     trainloader = torch.utils.data.DataLoader(train_dataset,batch_size=1)
 
     # 确定 crop_size 和 类别数量
     crop_size,num_class = AutoTrainer.Find_Crop_Size_And_NClass(trainloader)
+    print(num_class)
 
     # 确定训练epoch
     epoch = AutoTrainer.Find_Epoch(num_class=num_class,dataset=train_dataset)
@@ -149,20 +164,20 @@ def train(data_root,record_root,cuda_visible_devices='0,1'):
     # 确定网络及backbone
     backbone,net,pretrained_path = AutoTrainer.Find_Network(num_class=num_class)
 
-    # 创建logger并生成输出路径
-    config.OUTPUT_DIR = record_root
-    AutoTrainer.Creat_Logger(cfg=config, phase='train')
-    AutoTrainer.logger.info(config)
+    # # # 创建logger并生成输出路径
+    # config.OUTPUT_DIR = record_root
+    # AutoTrainer.Creat_Logger(cfg=config, phase='train')
+    # AutoTrainer.logger.info(config)
 
-    # 保存训练参数到json
-    train_param_dict = {'crop_size':list(crop_size),'nclass':int(num_class),'backbone':backbone,'net':net}
-
-    with open(os.path.join(AutoTrainer.final_output_dir,"param.json"),"w") as f:
-        json.dump(train_param_dict,f)
-        print("save param file at %s successfully!"%(AutoTrainer.final_output_dir))
-
+    # # 保存训练参数到json
+    # train_param_dict = {'crop_size':list(crop_size),'nclass':int(num_class),'backbone':backbone,'net':net}
+    #
+    # with open(os.path.join(AutoTrainer.final_output_dir,"param.json"),"w") as f:
+    #     json.dump(train_param_dict,f)
+    #     print("save param file at %s successfully!"%(AutoTrainer.final_output_dir))
+    epoch = 5
     world_size = 2
-    mp.spawn(train_main_worker,nprocs=2,args=(world_size,data_root,
+    mp.spawn(train_main_worker,nprocs=2,args=(world_size,data_root,record_root,
                                               num_class,crop_size,epoch,backbone,net,pretrained_path,
                                               cuda_visible_devices))
     return AutoTrainer.final_output_dir

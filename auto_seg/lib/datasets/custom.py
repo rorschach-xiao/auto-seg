@@ -33,6 +33,8 @@ class CustomDataset(BaseDataset):
         else:
             label = cv2.imread(os.path.join(self.root,
                                             item["label"]),cv2.IMREAD_GRAYSCALE)
+            #TODO
+            label[label==38]=1
             size = label.shape
             if self.transform!=None:
                 image,label = self.transform(image,label) # aug & normlize
