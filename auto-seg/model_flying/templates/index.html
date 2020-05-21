@@ -128,6 +128,7 @@
                         success:function(result){
                             if (result.return == "success") {
                                 $('#inference_text').html("推理完成，下面是推理结果:\n" + result.predict);
+                                $('#inferresult').attr('src','/static/img/demo.jpg'+'?'+Math.random())
                             }
                             else {
                                 $('#inference_text').html("推理失败! 请检查错误或联系管理员:\n" + result.return);
@@ -294,7 +295,7 @@
                         url : "classify/test",
                         type : "POST",
                         contentType: "application/json;charset=utf-8",
-                        {#async : true,#}
+                        // {#async : true,#}
                         dataType : "text",
                         timeout: 0,
                         success : function(result) {
@@ -352,7 +353,7 @@
     }
 </style>
 
-{#<body style="background-image: url(/static/AI.png);background-size: 100%">#}
+<!--{#<body style="background-image: url(/static/AI.png);background-size: 100%">#}-->
 <body>
     <h1 style="text-align: center">AutoCV自助训练、验证系统</h1>
 
@@ -420,12 +421,13 @@
             <input type="button" value="开始推理" id="upload_inference">
         </form>
         <br>
-        <div style="margin: auto;width: 650px">
+         <div style="margin: auto;width: 1300px">
             <div class="image_container" style="float:left;margin: auto">
-                <img src="" id = "preview", style="height:190px;width:210px;border-width:0px;">
+                <img src="" id = "preview", style="height:400px;width:600px;border-width:0px;">
+                <img src="" id = "inferresult", style="height:400px;width:600px;border-width:0px;">
             </div>
 
-            <div style="float:right;margin: auto">
+            <div style="margin: auto">
                 <textarea id="inference_text" name="test_text" cols="50"
                       rows="7" readonly="true" style = "resize:none;overflow:scroll;color:#747474"></textarea>
             </div>

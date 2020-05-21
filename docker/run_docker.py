@@ -15,11 +15,11 @@ AUTH_START_TIME='2020-3-16 14:20'
 # 总共授权时间天数
 AUTH_TIME = 100
 
-DOCKER_IMAGE = "autocv/classifier:v0.1"
-CONTAINER_NAME = "autocv_classifier_v_0_1_contrainer"
+DOCKER_IMAGE = "autocv/segment:v0.1"
+CONTAINER_NAME = "autocv_segment:_v_0_1_contrainer"
 DATA_DES_DIR = "/home/root/dataset"
 RECORD_DST_DIR = "/home/root/records"
-LOGS_DST_DIR = "/home/root/logs"
+
 
 def __time_auth_control():
     if not AUTH_CONTROL:

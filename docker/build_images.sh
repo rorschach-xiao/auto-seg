@@ -3,11 +3,14 @@
 
 IMAGE_VERSION=v0.1
 
-cp -r ../autocv_classification_pytorch ./
+REPO_NAME=auto-seg
+MODEL_FOLDER=$REPO_NAME/pretrained_models
+
+cp -r ../${REPO_NAME} ./
 
 # 下载pretrained models
-if ! ls dependencies/models;then
-    mkdir -p dependencies/models
+if ! ls ${MODEL_FOLDER};then
+    mkdir -p ${MODEL_FOLDER}
 
     model_list="hrnetv2_w18_imagenet_pretrained.pth \
                 hrnetv2_w32_imagenet_pretrained.pth  \
@@ -16,8 +19,8 @@ if ! ls dependencies/models;then
                 resnest200-75117900.pth  \
                 resnest50-528c19ca.pth"
     for model in ${model_list[@]};do
-        wget ftp://m7-model-gpu16.4pd.io/autocv_seg/models/${model} -P ./dependencies/models
+        wget ftp://m7-model-gpu16.4pd.io/autocv_seg/models/${model} -P ${MODEL_FOLDER}
     done
 fi
 
-docker build -t autocv/classifier:${IMAGE_VERSION} .
+docker build -t autocv/segment:${IMAGE_VERSION} .

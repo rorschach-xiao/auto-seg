@@ -10,7 +10,7 @@ except:
     print("You don't seem to have Cython installed.")
     sys.exit(1)
 
-exclude_path = ['__init__.py', 'contrib', 'deprecated']
+exclude_path = ["__init__.py", "scripts", "experiments"]
 
 def in_excluded(path):
     for ex_path in exclude_path:
@@ -46,37 +46,22 @@ def make_extension(ext_names):
         )
 
 
-packages = find_packages("autocv_classification_pytorch", exclude = ["contrib", "deprecated"])
-packages = list("autocv_classification_pytorch." + p for p in packages)
-packages.append("autocv_classification_pytorch")
+packages = find_packages("auto-seg", exclude = ["scripts", "experiments"])
+packages = list("auto-seg." + p for p in packages)
+packages.append("auto-seg")
 
 ext_names = reduce(lambda l1, l2: l1 + l2, [scandir(d) for d in packages])
 
 ext_modules = [make_extension(name) for name in ext_names]
-# ext_modules.append('autocv.py')
-# print(ext_names)
 
 # using command "python ./setup.py build_ext --inplace"
 # to compile ".py" to ".so"
 directives = {"language_level": 3}
-# setup(
-#   name="cv_research",
-#   packages = find_packages(),
-#
-#   ext_modules = cythonize(ext_modules, compiler_directives = directives),
-#   cmdclass = {'build_ext': build_ext},
-# )
 
-setup(name="autocv_classification_pytorch",
+setup(name="auto-seg",
         version="0.0.1",
-        description="autocv_classification_pytorch",
+        description="auto-seg",
         author="AutoCV team",
-        install_requires=[
-            "nni",
-            "albumentations",
-            "pycallgraph",
-            "gevent",
-        ],
         python_requires=">=3.6",
         packages = packages,
         ext_modules=cythonize(ext_modules, compiler_directives=directives),

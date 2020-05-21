@@ -12,7 +12,6 @@ if __name__ == '__main__':
     train_parser.add_argument("--exp_code", type = str, default = "fix", help = "测试ID")
     train_parser.add_argument("--visible_devices_list", type = str,
                               default = "0,1,2,3", help = "逗号隔开的可见GPU ID列表，默认0,1,2,3")
-    train_parser.add_argument("--debug", action = "store_true")
 
     test_parser = sub_parser.add_parser("test", help = "启动模型批量测试")
     test_parser.add_argument("--subcommand", default = "test")
@@ -20,13 +19,6 @@ if __name__ == '__main__':
     test_parser.add_argument("--dataset_path", type = str, help ="数据集绝对路径", required = True)
     test_parser.add_argument("--visible_devices_list", type = str,
                              default = "0,1,2,3", help = "逗号隔开的可见GPU ID列表，默认0,1,2,3")
-
-    # inference_parser = sub_parser.add_parser("inference", help = "通过本地容器进行预测")
-    # inference_parser.add_argument("--subcommand", default = "inference")
-    # inference_parser.add_argument("--model_path", type = str, help = "已训练模型绝对路径", required = True)
-    # inference_parser.add_argument("--image_file_path", type = str, help = "单个图片绝对路径", required = True)
-    # inference_parser.add_argument("--visible_devices_list", type = str,
-    #                               default = "0,1,2,3", help = "逗号隔开的可见GPU ID列表，默认0,1,2,3")
 
     start_server_parser = sub_parser.add_parser("start_server", help="启动模型服务，为通过网络进行预测提供服务")
     start_server_parser.add_argument("--subcommand", default="start_server")
