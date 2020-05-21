@@ -103,7 +103,7 @@ class BaseDataset(data.Dataset):
 
     def multi_scale_inference(self,config, model, image, scales=[1], flip=False,stride_rate = 2/3):
         batch,_,ori_h,ori_w = image.size()
-        crop_size = (config.TRAIN.IMAGE_SIZE[1], config.TRAIN.IMAGE_SIZE[0])
+        crop_size = (config.TEST.IMAGE_SIZE[1], config.TEST.IMAGE_SIZE[0])
         assert batch ==1
         image = np.squeeze(image.numpy(),axis=0)
         image = np.transpose(image,(1,2,0)) # (H,W,C)
