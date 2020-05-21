@@ -340,7 +340,7 @@ class AutoTestor():
         test_transform = Compose(test_transform_list)
         test_dataset = eval('datasets.' + cfg.DATASET.DATASET)(
             root=cfg.DATASET.ROOT,
-            list_path='val.txt',
+            list_path='test.txt',
             num_samples=None,
             num_classes=cfg.DATASET.NUM_CLASSES,
             transform=test_transform)
