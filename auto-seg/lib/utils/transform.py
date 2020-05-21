@@ -25,6 +25,8 @@ class Compose(object):
         self.segtransform = segtransform
 
     def __call__(self, image, label=None):
+        if self.segtransform == None:
+            return image,label
         for t in self.segtransform:
             image, label = t(image, label)
         if label is None:
