@@ -2,9 +2,11 @@ import cv2
 import numpy as np
 
 import torch
+import torch.nn as nn
 import torch.backends.cudnn as cudnn
 import torch.distributed as dist
 import torch.multiprocessing as mp
+
 
 import os
 import logging
@@ -14,7 +16,7 @@ import timeit
 
 from config import config
 from core.criterion import CrossEntropy, OhemCrossEntropy,SoftDiceLoss,LovaszHinge,LovaszSoftmax,LovaszSigmoid,StableBCELoss,ComboLoss
-from core.function import train, validate
+from core.function import train, validate,testval
 from utils.utils import create_logger, FullModel
 from utils.transform import *
 
@@ -48,14 +50,14 @@ class AutoTrainer():
             print('=> creating {}'.format(root_output_dir))
             root_output_dir.mkdir()
 
-        dataset = cfg.DATASET.DATASET
-        model = cfg.MODEL.NAME
+        time_str = time.strftime('%Y-%m-%d-%H-%M')
+        dataset = 'custom'+'_'+time_str
 
         final_output_dir = root_output_dir / dataset
         print('=> creating {}'.format(final_output_dir))
         final_output_dir.mkdir(parents=True, exist_ok=True)
 
-        time_str = time.strftime('%Y-%m-%d-%H-%M')
+
         log_file = '{}_{}.log'.format(time_str, phase)
         final_log_file = final_output_dir / log_file
         head = '%(asctime)-15s %(message)s'
@@ -66,8 +68,8 @@ class AutoTrainer():
         console = logging.StreamHandler()
         logging.getLogger('').addHandler(console)
 
-        tensorboard_log_dir = Path(cfg.LOG_DIR) / dataset / model / \
-                              (time_str)
+        tensorboard_log_dir = Path(cfg.LOG_DIR) / dataset
+
         print('=> creating {}'.format(tensorboard_log_dir))
         tensorboard_log_dir.mkdir(parents=True, exist_ok=True)
         AutoTrainer.logger = logger
@@ -298,10 +300,117 @@ class AutoTrainer():
 
 
 
-
 class AutoTestor():
+    logger=None
+    final_output_dir=None
+    test_dataset=None
+    testloader=None
+    model=None
+    metrics_dict=None
+
     def __init__(self):
         pass
+
+    @staticmethod
+    def Creat_Logger(output_dir, phase='test'):
+        output_dir = Path(output_dir)
+
+        time_str = time.strftime('%Y-%m-%d-%H-%M')
+
+        final_output_dir = output_dir
+        print('=> creating {}'.format(final_output_dir))
+        final_output_dir.mkdir(parents=True, exist_ok=True)
+
+        log_file = '{}_{}.log'.format(time_str, phase)
+        final_log_file = final_output_dir / log_file
+        head = '%(asctime)-15s %(message)s'
+        logging.basicConfig(filename=str(final_log_file),
+                            format=head)
+        logger = logging.getLogger()
+        logger.setLevel(logging.INFO)
+        console = logging.StreamHandler()
+        logging.getLogger('').addHandler(console)
+
+        AutoTestor.logger = logger
+        AutoTestor.final_output_dir = str(final_output_dir)
+
+    @staticmethod
+    def Build_Dataset(cfg,**kwargs):
+        test_transform_list = get_test_transform(cfg)
+        test_transform = Compose(test_transform_list)
+        test_dataset = eval('datasets.' + cfg.DATASET.DATASET)(
+            root=cfg.DATASET.ROOT,
+            list_path='val.txt',
+            num_samples=None,
+            num_classes=cfg.DATASET.NUM_CLASSES,
+            transform=test_transform)
+
+        testloader = torch.utils.data.DataLoader(
+            test_dataset,
+            batch_size=1,
+            shuffle=False,
+            num_workers=cfg.WORKERS,
+            pin_memory=True)
+        AutoTestor.test_dataset=test_dataset
+        AutoTestor.testloader=testloader
+
+    @staticmethod
+    def Build_Model(cfg,**kwargs):
+        if torch.__version__.startswith('1'):
+            module = eval('models.nets.' + cfg.MODEL.NAME)
+            module.BatchNorm2d_class = module.BatchNorm2d = torch.nn.BatchNorm2d
+            module = eval('models.backbone.basenet')
+            module.BatchNorm2d_class = module.BatchNorm2d = torch.nn.BatchNorm2d
+            module = eval('models.backbone.hrnet')
+            module.BatchNorm2d_class = module.BatchNorm2d = torch.nn.BatchNorm2d
+        model = eval('models.nets.' + cfg.MODEL.NAME +
+                     '.get_seg_model')(cfg)
+        gpus = list(cfg.GPUS)
+        model = nn.DataParallel(model, device_ids=gpus).cuda()
+
+
+        model_state_file = cfg.TEST.MODEL_FILE
+        AutoTestor.logger.info('=> loading model from {}'.format(model_state_file))
+
+        pretrained_dict = torch.load(model_state_file)
+        model_dict = model.state_dict()
+        assert set('module.' + k[6:] for k in pretrained_dict) == set(model_dict)
+        pretrained_dict = {'module.' + k[6:]: v for k, v in pretrained_dict.items()
+                           if 'module.' + k[6:] in model_dict.keys()}
+        for k, _ in pretrained_dict.items():
+            AutoTestor.logger.info(
+                '=> loading {} from pretrained model'.format(k))
+        model_dict.update(pretrained_dict)
+        model.load_state_dict(model_dict, strict=False)
+
+        AutoTestor.model=model
+
+    @staticmethod
+    def Run_Testor(cfg,**kwargs):
+        start = timeit.default_timer()
+        mean_IoU, IoU_array, pixel_acc, mean_acc = testval(cfg,
+                                                           AutoTestor.test_dataset,
+                                                           AutoTestor.testloader,
+                                                           AutoTestor.model,
+                                                           sv_dir=AutoTestor.final_output_dir)
+
+        msg = 'MeanIU: {: 4.4f}, Pixel_Acc: {: 4.4f}, \
+                    Mean_Acc: {: 4.4f}, Class IoU: '.format(mean_IoU,
+                                                            pixel_acc, mean_acc)
+        metrics_dict = {'mean_IoU':mean_IoU,'IoU_array':IoU_array,'pixel_acc':pixel_acc,'mean_acc':mean_acc}
+        AutoTestor.metrics_dict = metrics_dict
+
+        logging.info(msg)
+        logging.info(IoU_array)
+        end = timeit.default_timer()
+        AutoTestor.logger.info('Mins: %d' % np.int((end - start) / 60))
+        AutoTestor.logger.info('Done')
+
+
+
+
+
+
 
 
 
