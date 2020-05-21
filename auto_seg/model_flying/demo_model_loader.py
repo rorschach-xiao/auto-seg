@@ -46,7 +46,7 @@ class Model_Loader(object):
 
 
     def train(self, dataset_path):
-        ckpt_path = auto_run.trainer(dataset_path, EXP_FOLDER)
+        ckpt_path = auto_run.train(dataset_path, EXP_FOLDER)
         if not ckpt_path:
             return False
 
@@ -66,16 +66,14 @@ class Model_Loader(object):
         if not self.ckpt_path:
             return
 
-        # TODO 调用测试
-        # results, _ = auto_run.test(dataset_path, self.ckpt_path)
+        results = auto_run.test(dataset_path, self.ckpt_path)
 
         # test_metrics_results = results[0][0]
         # test_metrics_mean = {key:test_metrics_results[key][0] for key in test_metrics_results.keys()}
-        #
-        # print(test_metrics_mean, flush=True)
-        #
-        # return test_metrics_mean
-        pass
+
+        print(results, flush=True)
+
+        return results
 
 
     def get_status(self):
