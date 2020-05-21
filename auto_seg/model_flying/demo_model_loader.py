@@ -1,6 +1,7 @@
 import os
 import shutil
 import cv2
+import logging
 
 from tools import auto_run
 
@@ -53,6 +54,7 @@ class Model_Loader(object):
             return tmp_file_path
         except Exception as e:
             print(e, flush = True)
+            logging.exception(e)
             return 'image data or model error'
 
 
@@ -61,6 +63,7 @@ class Model_Loader(object):
             ckpt_path = auto_run.train(dataset_path, EXP_FOLDER)
         except Exception as e:
             print(e, flush = True)
+            logging.exception(e)
             return False
 
         if not ckpt_path:
