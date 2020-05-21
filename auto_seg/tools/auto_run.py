@@ -6,14 +6,12 @@ import torch.backends.cudnn as cudnn
 import torch.multiprocessing as mp
 import torch.functional as F
 
+import _init_paths
 import os
 import logging
 import pprint
 import json
 from config import config
-
-import _init_paths
-from .train import get_sampler
 
 
 from .auto_helper import *
@@ -24,14 +22,13 @@ from tensorboardX import SummaryWriter
 def train_main_worker(local_rank,
                       world_size,
                       data_root,
-                      record_root,
                       num_class,
                       crop_size = (512,512),
                       epoch = 40,
                       backbone = "hrnet18",
                       model_name = "seg_hrnet",
                       pretrained_path = 'pretrained_models/hrnetv2_w18_imagenet_pretrained.pth',
-                      cuda_visible_devices=(0,1),
+                      cuda_visible_devices='0,1',
                       batch_size_per_gpu = 4,
                       init_lr = 1e-3,
                       random_seed = 304,
@@ -42,8 +39,7 @@ def train_main_worker(local_rank,
                       optimizer = 'adam',
                       **kwargs):
     # 更新config
-    config.OUTPUT_DIR = record_root
-    config.DATASET.NUM_CLASSES = num_class
+    config.DATASET.NUM_CLASSES = int(num_class)
     config.DATASET.ROOT = data_root
     config.DATASET.DATASET = 'custom'
     config.MODEL.NAME = model_name
@@ -57,7 +53,7 @@ def train_main_worker(local_rank,
     config.MODEL.ATROUS_RATE = atrous_rate
 
     config.TRAIN.SHUFFLE = True
-    config.TRAIN.IMAGE_SIZE = crop_size
+    config.TRAIN.IMAGE_SIZE = list(crop_size)
 
     config.TRAIN.LR = init_lr
     config.TRAIN.IGNORE_LABEL = ignore_label
@@ -106,8 +102,10 @@ def train_main_worker(local_rank,
     cudnn.enabled = True
 
     # 设置主进程地址和接口 以及使用GPU序号
+    port = random.randint(1000,5000)
     os.environ['MASTER_ADDR'] = '127.0.0.1'
-    os.environ['MASTER_PORT'] = 6666
+    os.environ['MASTER_PORT'] = str(port)
+
     os.environ['CUDA_VISIBLE_DEVICES'] = cuda_visible_devices
 
     # 数据准备
@@ -134,7 +132,7 @@ def train_main_worker(local_rank,
                             lr=config.TRAIN.LR,
                             writer_dict=writer_dict,
                             )
-def train(data_root,record_root,cuda_visible_devices=(0,1)):
+def train(data_root,record_root,cuda_visible_devices='0,1'):
     train_dataset = eval('datasets.custom')(
         root=data_root,
         list_path='train.txt',
@@ -152,24 +150,25 @@ def train(data_root,record_root,cuda_visible_devices=(0,1)):
     backbone,net,pretrained_path = AutoTrainer.Find_Network(num_class=num_class)
 
     # 创建logger并生成输出路径
+    config.OUTPUT_DIR = record_root
     AutoTrainer.Creat_Logger(cfg=config, phase='train')
     AutoTrainer.logger.info(config)
 
     # 保存训练参数到json
-    train_param_dict = {'crop_size':crop_size,'nclass':num_class,'backbone':backbone,'net':net}
+    train_param_dict = {'crop_size':list(crop_size),'nclass':int(num_class),'backbone':backbone,'net':net}
 
     with open(os.path.join(AutoTrainer.final_output_dir,"param.json"),"w") as f:
         json.dump(train_param_dict,f)
         print("save param file at %s successfully!"%(AutoTrainer.final_output_dir))
 
     world_size = 2
-    mp.spawn(train_main_worker,nprocs=2,args=(world_size,data_root,record_root,
+    mp.spawn(train_main_worker,nprocs=2,args=(world_size,data_root,
                                               num_class,crop_size,epoch,backbone,net,pretrained_path,
                                               cuda_visible_devices))
     return AutoTrainer.final_output_dir
 
 
-def test(data_root,output_root,cuda_visible_devices=(0,1)):
+def test(data_root,output_root,cuda_visible_devices='0,1'):
     if not os.path.exists(os.path.join(output_root,'param.json')):
         raise FileNotFoundError('can not find param.json')
     with open(os.path.join(output_root,'param.json'),'r') as f:
@@ -220,7 +219,7 @@ class InferenceJob(BaseDataset):
     '''
     继承BaseDataset 调用其中multi_scale_inference方法
     '''
-    def __init__(self,output_root,cuda_visible_devices=(0,1)):
+    def __init__(self,output_root,cuda_visible_devices='0,1'):
         self.output_root = output_root
         self.model = None
         self.transform = Compose([ToTensor])

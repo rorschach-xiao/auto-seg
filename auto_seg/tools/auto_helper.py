@@ -14,14 +14,18 @@ import time
 from pathlib import Path
 import timeit
 
-from config import config
+import _init_paths
+
+import models
+import datasets
 from core.criterion import CrossEntropy, OhemCrossEntropy,SoftDiceLoss,LovaszHinge,LovaszSoftmax,LovaszSigmoid,StableBCELoss,ComboLoss
 from core.function import train, validate,testval
 from utils.utils import create_logger, FullModel
 from utils.transform import *
 
-import _init_paths
-from .train import get_sampler
+
+from config import config
+from tools.train import get_sampler
 
 
 class AutoTrainer():

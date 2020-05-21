@@ -59,9 +59,9 @@ def main():
     if torch.__version__.startswith('1'):
         module = eval('models.nets.' + config.MODEL.NAME)
         module.BatchNorm2d_class = module.BatchNorm2d = torch.nn.BatchNorm2d
-        module = eval('models.backbone.basenet')
+        module = eval('models.backbones.basenet')
         module.BatchNorm2d_class = module.BatchNorm2d = torch.nn.BatchNorm2d
-        module = eval('models.backbone.hrnet')
+        module = eval('models.backbones.hrnet')
         module.BatchNorm2d_class = module.BatchNorm2d = torch.nn.BatchNorm2d
     model = eval('models.nets.' + config.MODEL.NAME +
                  '.get_seg_model')(config)
