@@ -9,6 +9,7 @@ from __future__ import division
 from __future__ import print_function
 
 import os.path as osp
+import os
 import sys
 
 
@@ -17,6 +18,6 @@ def add_path(path):
         sys.path.insert(0, path)
 
 this_dir = osp.dirname(__file__)
-
-lib_path = osp.join(this_dir, '..', 'lib')
-add_path(lib_path)
+project_path = os.path.split(this_dir)[0]
+add_path(project_path)
+add_path(osp.join(project_path, 'lib'))

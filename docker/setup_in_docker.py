@@ -10,7 +10,7 @@ except:
     print("You don't seem to have Cython installed.")
     sys.exit(1)
 
-exclude_path = ["__init__.py", "scripts", "experiments"]
+exclude_path = ["__init__.py", "scripts", "experiments", "start_server.py"]
 
 def in_excluded(path):
     for ex_path in exclude_path:
@@ -46,9 +46,9 @@ def make_extension(ext_names):
         )
 
 
-packages = find_packages("auto-seg", exclude = ["scripts", "experiments"])
-packages = list("auto-seg." + p for p in packages)
-packages.append("auto-seg")
+packages = find_packages("auto_seg", exclude = ["scripts", "experiments"])
+packages = list("auto_seg." + p for p in packages)
+packages.append("auto_seg")
 
 ext_names = reduce(lambda l1, l2: l1 + l2, [scandir(d) for d in packages])
 
@@ -58,9 +58,9 @@ ext_modules = [make_extension(name) for name in ext_names]
 # to compile ".py" to ".so"
 directives = {"language_level": 3}
 
-setup(name="auto-seg",
+setup(name="auto_seg",
         version="0.0.1",
-        description="auto-seg",
+        description="auto_seg",
         author="AutoCV team",
         python_requires=">=3.6",
         packages = packages,

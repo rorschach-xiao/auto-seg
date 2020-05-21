@@ -3,7 +3,7 @@
 
 IMAGE_VERSION=v0.1
 
-REPO_NAME=auto-seg
+REPO_NAME=auto_seg
 MODEL_FOLDER=$REPO_NAME/pretrained_models
 
 cp -r ../${REPO_NAME} ./

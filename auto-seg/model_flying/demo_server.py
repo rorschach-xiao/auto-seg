@@ -1,5 +1,4 @@
-from autocv_classification_pytorch.model_flying.demo_model_loader import Model_Loader
-from autocv_classification_pytorch.data.dataset_utils import onefile_dataset_validity_check
+from model_flying.demo_model_loader import Model_Loader
 from flask import Flask, request, render_template
 from werkzeug.utils import secure_filename
 from gevent.pywsgi import WSGIServer
@@ -51,7 +50,8 @@ def upload(t, **kwargs):
             data_path = '.'.join(data_path.split('.')[0:-1])
             # check data validity
             try:
-                onefile_dataset_validity_check(data_path, 'train.txt')
+                # onefile_dataset_validity_check(data_path, 'train.txt')
+                pass
             except Exception as e:
                 print(e)
                 return {'return': 'dataset invalid'}
@@ -117,7 +117,7 @@ def inference():
     return {'return': 'success', 'predict' : model.inference(data)}
 
 
-def start_server(visible_devices_list, port):
+def start_server(port):
     if not os.path.isdir(UPLOAD_FOLDER):
         os.mkdir(UPLOAD_FOLDER)
 
@@ -127,7 +127,7 @@ def start_server(visible_devices_list, port):
 
     print("loading models...", flush=True)
     global model
-    model = Model_Loader(visible_devices_list)
+    model = Model_Loader()
 
     print("server run...", flush=True)
     app.run(host='0.0.0.0', port = port, debug = True,  use_reloader = False)
