@@ -16,7 +16,7 @@ AUTH_START_TIME='2020-3-16 14:20'
 AUTH_TIME = 100
 
 DOCKER_IMAGE = "autocv/segment:v0.1"
-CONTAINER_NAME = "autocv_segment:_v_0_1_contrainer"
+CONTAINER_NAME = "autocv_segment_v_0_1_contrainer"
 DATA_DES_DIR = "/home/root/dataset"
 RECORD_DST_DIR = "/home/root/records"
 
@@ -151,13 +151,11 @@ def start_server(args):
                                             os.path.join(os.path.abspath("."), "data"),
                                             DATA_DES_DIR)
     start_cmd = "docker run --name {} -p {}:{} --shm-size=32G --gpus all {} {} " \
-                "bash -c \"python -c \\\"from autocv_classification_pytorch import autocv_start_server;" \
-                "autocv_start_server.start_server('{}',{})\\\"\"".format(CONTAINER_NAME,
+                "python tools/start_server.py --port {}".format(CONTAINER_NAME,
                                                                         args.port,
                                                                         args.port,
                                                                         dev_mount,
                                                                         DOCKER_IMAGE,
-                                                                        args.visible_devices_list,
                                                                         args.port)
     # print(start_cmd)
     os.system(start_cmd)

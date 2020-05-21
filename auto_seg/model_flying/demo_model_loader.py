@@ -37,7 +37,8 @@ class Model_Loader(object):
             # label_name, max_prob = self.infer_job.run(image)
             # TODO 调用推理接口
 
-            return 'class: %s, prob: %.5f' % (label_name, max_prob)
+            # return 'class: %s, prob: %.5f' % (label_name, max_prob)
+            pass
 
         except Exception as e:
             print(e)
@@ -66,14 +67,15 @@ class Model_Loader(object):
             return
 
         # TODO 调用测试
-        results, _ = auto_run.test(dataset_path, self.ckpt_path)
+        # results, _ = auto_run.test(dataset_path, self.ckpt_path)
 
-        test_metrics_results = results[0][0]
-        test_metrics_mean = {key:test_metrics_results[key][0] for key in test_metrics_results.keys()}
-
-        print(test_metrics_mean, flush=True)
-
-        return test_metrics_mean
+        # test_metrics_results = results[0][0]
+        # test_metrics_mean = {key:test_metrics_results[key][0] for key in test_metrics_results.keys()}
+        #
+        # print(test_metrics_mean, flush=True)
+        #
+        # return test_metrics_mean
+        pass
 
 
     def get_status(self):

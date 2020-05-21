@@ -24,8 +24,6 @@ if __name__ == '__main__':
     start_server_parser.add_argument("--subcommand", default="start_server")
     start_server_parser.add_argument("--model_path", type=str, help = "本地存储训练模型的绝对路径", required = True)
     start_server_parser.add_argument("--port", type=int, default = 5000, help = "服务端口，默认5000")
-    start_server_parser.add_argument("--visible_devices_list", type = str,
-                                     default='0,1,2,3', help = "逗号隔开的可见GPU ID列表，默认0,1,2,3")
 
     args,_ = parser.parse_known_args()
     if "subcommand" in args:
