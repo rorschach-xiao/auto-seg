@@ -298,9 +298,9 @@ class InferenceJob(BaseDataset):
             )
         if pred.shape[1]==1:
             pred = np.asarray((pred[:,0,:,:]>0).cpu(),dtype = np.uint8)
+            pred[pred == 1] = 255
         else:
             pred = np.asarray(np.argmax(pred.cpu(), axis=1), dtype=np.uint8)
-            pred[pred==1]=255
         pred = pred.squeeze()
         return pred
 
