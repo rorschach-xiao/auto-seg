@@ -2,6 +2,7 @@ import os
 import shutil
 import cv2
 import logging
+import os
 
 from tools import auto_run
 
@@ -47,9 +48,13 @@ class Model_Loader(object):
 
     def inference(self, image):
         try:
-            tmp_file_path = 'static/img/inference_results.jpg'
+            folder = 'model_flying/static/img'
+            if not os.path.isdir(folder):
+                os.makedirs(folder)
+            tmp_file_path = os.path.join(folder, 'inference_results.png')
+            print(os.path.abspath('.'))
             output_img = self.inferer._run(image)
-            cv2.imwrite(output_img, tmp_file_path)
+            cv2.imwrite(tmp_file_path, output_img)
 
             return tmp_file_path
         except Exception as e:
