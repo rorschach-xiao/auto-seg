@@ -56,6 +56,9 @@ class Model_Loader(object):
             output_img = self.inferer._run(image)
             cv2.imwrite(tmp_file_path, output_img)
 
+            import numpy as np
+            print(np.unique(output_img), flush = True)
+
             return tmp_file_path
         except Exception as e:
             print(e, flush = True)
