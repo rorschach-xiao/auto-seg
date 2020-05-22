@@ -57,6 +57,7 @@ def train_main_worker(local_rank,
     config.TRAIN.SHUFFLE = True
     crop_size = (512,512)
     config.TRAIN.IMAGE_SIZE = list(crop_size)
+    config.TRAIN.BASE_SIZE = max(config.TRAIN.IMAGE_SIZE)
 
     config.TRAIN.LR = init_lr
     config.TRAIN.IGNORE_LABEL = ignore_label
