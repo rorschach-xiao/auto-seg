@@ -7,7 +7,6 @@ import torch.backends.cudnn as cudnn
 import torch.distributed as dist
 import torch.multiprocessing as mp
 
-
 import os
 import logging
 import time
@@ -244,7 +243,7 @@ class AutoTrainer():
 
     @staticmethod
     def Find_Epoch(num_class,dataset):
-        if num_class == 2:
+        if num_class == 1:
             if len(dataset) < 1000:
                 epoch = 20
             elif len(dataset) < 5000:
@@ -344,7 +343,7 @@ class AutoTestor():
         test_transform = Compose(test_transform_list)
         test_dataset = eval('datasets.' + cfg.DATASET.DATASET)(
             root=cfg.DATASET.ROOT,
-            list_path='test.txt',
+            list_path='testval.txt',
             num_samples=None,
             num_classes=cfg.DATASET.NUM_CLASSES,
             transform=test_transform)
@@ -363,9 +362,9 @@ class AutoTestor():
         if torch.__version__.startswith('1'):
             module = eval('models.nets.' + cfg.MODEL.NAME)
             module.BatchNorm2d_class = module.BatchNorm2d = torch.nn.BatchNorm2d
-            module = eval('models.backbone.basenet')
+            module = eval('models.backbones.basenet')
             module.BatchNorm2d_class = module.BatchNorm2d = torch.nn.BatchNorm2d
-            module = eval('models.backbone.hrnet')
+            module = eval('models.backbones.hrnet')
             module.BatchNorm2d_class = module.BatchNorm2d = torch.nn.BatchNorm2d
         model = eval('models.nets.' + cfg.MODEL.NAME +
                      '.get_seg_model')(cfg)

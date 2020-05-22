@@ -47,8 +47,10 @@ def train_main_worker(local_rank,
     config.MODEL.BACKBONE = backbone
     if config.MODEL.NAME=='seg_hrnet':
         config.MODEL.NUM_OUTPUTS = 1
+        config.TRAIN.NONBACKBONE_KEYWORDS=['last_layer']
     else:
         config.MODEL.NUM_OUTPUTS = 2
+        config.TRAIN.NONBACKBONE_KEYWORDS = ['asp_ocr','aux_layer']
     config.MODEL.PRETRAINED = pretrained_path
     config.MODEL.DILATION = dilation
     config.MODEL.ATROUS_RATE = atrous_rate
@@ -63,14 +65,15 @@ def train_main_worker(local_rank,
     config.TRAIN.RANDOM_ANGLE_DEGREE= 20
     config.TRAIN.RANDOM_SCALE_MIN= 0.5
     config.TRAIN.RANDOM_SCALE_MAX= 1.5
-    config.TRAIN.TRANS_LIST= ['random_scale',
+
+
+    config.TRAIN.TRANS_LIST= ['resize',
                               'random_rotate',
                               'random_blur',
                               'random_hflip',
-                              'crop',
                               'totensor',
                               'normalize']
-    config.VAL.TRANS_LIST= ['crop',
+    config.VAL.TRANS_LIST= ['resize',
                             'totensor',
                             'normalize']
 
@@ -156,13 +159,12 @@ def train(data_root,record_root,cuda_visible_devices='0,1'):
 
     # 确定 crop_size 和 类别数量
     crop_size,num_class = AutoTrainer.Find_Crop_Size_And_NClass(trainloader)
-    print(num_class)
 
     # 确定训练epoch
     epoch = AutoTrainer.Find_Epoch(num_class=num_class,dataset=train_dataset)
 
     # 确定网络及backbone
-    backbone,net,pretrained_path = AutoTrainer.Find_Network(num_class=num_class)
+    backbone,net,pretrained_path = AutoTrainer.Find_Network(num_class)
 
     # # # 创建logger并生成输出路径
     # config.OUTPUT_DIR = record_root
@@ -175,7 +177,7 @@ def train(data_root,record_root,cuda_visible_devices='0,1'):
     # with open(os.path.join(AutoTrainer.final_output_dir,"param.json"),"w") as f:
     #     json.dump(train_param_dict,f)
     #     print("save param file at %s successfully!"%(AutoTrainer.final_output_dir))
-    epoch = 5
+
     world_size = 2
     mp.spawn(train_main_worker,nprocs=2,args=(world_size,data_root,record_root,
                                               num_class,crop_size,epoch,backbone,net,pretrained_path,
@@ -204,6 +206,7 @@ def test(data_root,output_root,cuda_visible_devices='0,1'):
     config.MODEL.BACKBONE = param_dict['backbone']
 
     config.TEST.IMAGE_SIZE = param_dict['crop_size']
+    # TODO
     config.TEST.SCALE_LIST = [0.5,1.0,1.5]
     config.TEST.MODEL_FILE = os.path.join(AutoTestor.final_output_dir,'final_state.pth')
     if config.MODEL.NAME == 'seg_hrnet':
@@ -251,7 +254,7 @@ class InferenceJob(BaseDataset):
         config.MODEL.NAME = self.param_dict['net']
         config.MODEL.BACKBONE = self.param_dict['backbone']
         config.DATASET.NUM_CLASSES = self.param_dict['nclass']
-
+        # TODO
         config.TEST.SCALE_LIST = [0.5, 1.0, 1.5]
         config.TEST.MODEL_FILE = os.path.join(output_root, 'final_state.pth')
         config.TEST.FLIP_TEST = True
