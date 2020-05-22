@@ -120,7 +120,7 @@ def inference():
     return {'return': 'success', 'predict' : model.inference(data)}
 
 
-def start_server(port):
+def start_server(port, visible_devices_list):
     if not os.path.isdir(UPLOAD_FOLDER):
         os.mkdir(UPLOAD_FOLDER)
 
@@ -130,7 +130,7 @@ def start_server(port):
 
     print("loading models...", flush=True)
     global model
-    model = Model_Loader()
+    model = Model_Loader(visible_devices_list)
 
     print("server run...", flush=True)
     app.run(host='0.0.0.0', port = port, debug = True,  use_reloader = False)

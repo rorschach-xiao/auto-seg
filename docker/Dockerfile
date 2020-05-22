@@ -104,9 +104,9 @@ COPY remove_all_c_py_files.sh ${TARGET_DIR}
 
 WORKDIR ${TARGET_DIR}
 RUN rm -fr ${TARGET_DIR}/auto_seg/experiments
-#RUN python setup.py build_ext --inplace
-#RUN sh remove_all_c_py_files.sh
-#RUN rm -fr build setup.py remove_all_c_py_files.sh
+RUN python setup.py build_ext --inplace
+RUN sh remove_all_c_py_files.sh
+RUN rm -fr build setup.py remove_all_c_py_files.sh
 
 WORKDIR ${TARGET_DIR}/auto_seg
 
