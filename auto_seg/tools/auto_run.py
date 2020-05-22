@@ -245,7 +245,10 @@ class InferenceJob(BaseDataset):
         config.MODEL.NAME = self.param_dict['net']
         config.MODEL.BACKBONE = self.param_dict['backbone']
         config.DATASET.NUM_CLASSES = self.param_dict['nclass']
+
         # TODO
+        config.TEST.IMAGE_SIZE = self.param_dict['crop_size']
+        config.TEST.BASE_SIZE = max(config.TEST.IMAGE_SIZE)
         config.TEST.SCALE_LIST = [0.5, 1.0, 1.5]
         config.TEST.MODEL_FILE = os.path.join(output_root, 'final_state.pth')
         config.TEST.FLIP_TEST = True
@@ -263,7 +266,7 @@ class InferenceJob(BaseDataset):
 
 
     def _load_model(self):
-        AutoTestor.Creat_Logger(output_dir, 'test')
+        AutoTestor.Creat_Logger(self.output_root, 'test')
         AutoTestor.Build_Model(cfg=self.cfg)
         self.model = AutoTestor.model
 
