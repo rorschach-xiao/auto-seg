@@ -96,7 +96,10 @@ def test():
     model.set_status('testing')
     test_results = model.test(test_data_path)
     model.set_status('tested')
-    return {'return': 'success', 'records': str(test_results)}
+    if test_results:
+        return {'return': 'success', 'records': str(test_results)}
+
+    return {'return': 'failed', 'records': ''}
 
 
 @app.route('/classify/get_status', methods=['GET'])

@@ -18,7 +18,7 @@ AUTH_TIME = 100
 DOCKER_IMAGE = "autocv/segment:v0.1"
 CONTAINER_NAME = "autocv_segment_v_0_1_contrainer"
 DATA_DES_DIR = "/home/root/dataset"
-RECORD_DST_DIR = "/home/root/records"
+RECORD_DST_DIR = "/home/root/auto_seg/records"
 
 
 def __time_auth_control():

@@ -60,7 +60,7 @@ class Model_Loader(object):
 
     def train(self, dataset_path):
         try:
-            ckpt_path = auto_run.train(dataset_path, EXP_FOLDER)
+            ckpt_path = auto_run.train(dataset_path, EXP_FOLDER, '6,7')
         except Exception as e:
             print(e, flush = True)
             logging.exception(e)
@@ -85,7 +85,12 @@ class Model_Loader(object):
         if not self.ckpt_path:
             return
 
-        results = auto_run.test(dataset_path, self.ckpt_path)
+        try:
+            results = auto_run.test(dataset_path, self.ckpt_path)
+        except Exception as e:
+            print(e, flush = True)
+            logging.exception(e)
+            return None
 
         print(results, flush=True)
         return results
