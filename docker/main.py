@@ -8,8 +8,8 @@ if __name__ == '__main__':
 
     train_parser = sub_parser.add_parser("train", help = "启动模型训练")
     train_parser.add_argument("--subcommand", default = "train")
+    train_parser.add_argument("--model_path", type = str, help = "已训练模型绝对路径", required = True)
     train_parser.add_argument("--dataset_path", type = str, help = "数据集绝对路径", required = True)
-    train_parser.add_argument("--exp_code", type = str, default = "fix", help = "测试ID")
     train_parser.add_argument("--visible_devices_list", type = str,
                               default = "0,1", help = "逗号隔开的可见GPU ID列表，默认0,1,2,3")
 

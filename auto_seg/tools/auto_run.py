@@ -186,8 +186,6 @@ def test(data_root,output_root,cuda_visible_devices='0,1'):
         param_dict = json.load(f)
     os.environ['CUDA_VISIBLE_DEVICES'] = cuda_visible_devices
 
-
-
     # 更新test config
     config.GPUS = [0,1]
     config.DATASET.DATASET='custom'
@@ -310,46 +308,28 @@ class InferenceJob(BaseDataset):
         return pred
 
 
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='AutoCV semantic segmentation Module')
+    sub_parser = parser.add_subparsers(help='Command line controlling training process')
+
+    train_parser = sub_parser.add_parser('train', help='training process')
+    train_parser.add_argument('--subcommand', default='train')
+    train_parser.add_argument('--dataset_path', type=str, default='')
+    train_parser.add_argument('--model_path', type=str, default='')
+    train_parser.add_argument('--visible_devices_list', type=str, default='0,1')
+
+    test_parser = sub_parser.add_parser('test', help='test process')
+    test_parser.add_argument('--subcommand', default='test')
+    test_parser.add_argument('--dataset_path', type=str, default='')
+    test_parser.add_argument('--model_path', type=str, default='')
+    test_parser.add_argument('--visible_devices_list', type=str, default='0')
 
 
+    args, unknow = parser.parse_known_args()
+    rest_args = list(unknow)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    if 'subcommand' in args:
+        if args.subcommand == 'train':
+            train(args.dataset_path, args.model_path, args.visible_devices_list)
+        elif args.subcommand == "test":
+            test(args.dataset_path, args.model_path, args.visible_devices_list)

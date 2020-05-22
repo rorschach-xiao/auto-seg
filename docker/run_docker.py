@@ -107,12 +107,12 @@ def start_train(args):
                                                    # os.path.join(os.path.abspath("."), "logs"),
                                                    # LOGS_DST_DIR)
     start_cmd = "docker run --name {} --shm-size=32G --gpus all {} {} " \
-                "bash -c \"python -c \\\"from autocv_classification_pytorch import autocv;" \
-                "autocv.train('{}',available_gpus='{}',other_hp_search=False)\\\"\"".format(
+                "python tools/auto_run.py train --dataset_path {} --model_path {}  --visible_devices_list {}".format(
                                                                             CONTAINER_NAME,
                                                                              dev_mount,
                                                                              DOCKER_IMAGE,
                                                                              DATA_DES_DIR,
+                                                                             RECORD_DST_DIR,
                                                                              args.visible_devices_list)
     os.system(start_cmd)
 
@@ -127,13 +127,13 @@ def start_test(args):
                                            args.model_path,
                                            RECORD_DST_DIR)
     start_cmd = "docker run --name {} --shm-size=32G --gpus all {} {} " \
-                "bash -c \"python -c \\\"from autocv_classification_pytorch import autocv;" \
-                "autocv.test('{}','{}',available_gpus='{}')\\\"\"".format(CONTAINER_NAME,
-                                                                         dev_mount,
-                                                                         DOCKER_IMAGE,
-                                                                         DATA_DES_DIR,
-                                                                         RECORD_DST_DIR,
-                                                                         args.visible_devices_list)
+                "python tools/auto_run.py test --dataset_path {} --model_path {}  --visible_devices_list {}".format(
+                                                                                        CONTAINER_NAME,
+                                                                                        dev_mount,
+                                                                                        DOCKER_IMAGE,
+                                                                                        DATA_DES_DIR,
+                                                                                        RECORD_DST_DIR,
+                                                                                        args.visible_devices_list)
     os.system(start_cmd)
 
 
