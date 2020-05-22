@@ -231,7 +231,7 @@ class InferenceJob(BaseDataset):
     def __init__(self,output_root,cuda_visible_devices='0,1'):
         self.output_root = output_root
         self.model = None
-        self.transform = Compose([ToTensor])
+        self.transform = Compose([ToTensor()])
 
         if not os.path.exists(os.path.join(output_root, 'param.json')):
             raise FileNotFoundError('can not find param.json')
@@ -257,6 +257,8 @@ class InferenceJob(BaseDataset):
         self.mean = [0.485, 0.456, 0.406]
         self.std = [0.229, 0.224, 0.225]
         self.device = torch.device('cuda:0')
+
+        self._load_model()
 
 
     def _load_model(self):

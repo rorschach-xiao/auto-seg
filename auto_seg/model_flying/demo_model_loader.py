@@ -48,7 +48,7 @@ class Model_Loader(object):
     def inference(self, image):
         try:
             tmp_file_path = 'static/img/inference_results.jpg'
-            output_img = self.infer_job.run(image)
+            output_img = self.inferer._run(image)
             cv2.imwrite(output_img, tmp_file_path)
 
             return tmp_file_path
