@@ -21,6 +21,7 @@ from tensorboardX import SummaryWriter
 
 def train_main_worker(local_rank,
                       world_size,
+                      queue,
                       data_root,
                       record_root,
                       num_class,
@@ -147,6 +148,8 @@ def train_main_worker(local_rank,
                             lr=config.TRAIN.LR,
                             writer_dict=writer_dict,
                             )
+    if local_rank<=0:
+        queue.put(AutoTrainer.final_output_dir)
 def train(data_root,record_root,cuda_visible_devices='0,1'):
     os.environ['CUDA_VISIBLE_DEVICES'] = cuda_visible_devices
 
@@ -168,9 +171,11 @@ def train(data_root,record_root,cuda_visible_devices='0,1'):
     backbone,net,pretrained_path = AutoTrainer.Find_Network(num_class)
 
     world_size = 2
-    mp.spawn(train_main_worker,nprocs=2,args=(world_size,data_root,record_root,
-                                              num_class,crop_size,epoch,backbone,net,pretrained_path))
-    return AutoTrainer.final_output_dir
+    queue = mp.Queue()
+    mp.spawn(train_main_worker,nprocs=2,args=(world_size,queue,data_root,record_root,
+                                              num_class,crop_size,epoch,backbone,net,pretrained_path,))
+    return queue.get(block = False)
+
 
 
 def test(data_root,output_root,cuda_visible_devices='0,1'):
