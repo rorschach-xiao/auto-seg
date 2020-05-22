@@ -29,7 +29,6 @@ def train_main_worker(local_rank,
                       backbone = "hrnet18",
                       model_name = "seg_hrnet",
                       pretrained_path = 'pretrained_models/hrnetv2_w18_imagenet_pretrained.pth',
-                      cuda_visible_devices='0,1',
                       batch_size_per_gpu = 4,
                       init_lr = 1e-3,
                       random_seed = 304,
@@ -56,6 +55,7 @@ def train_main_worker(local_rank,
     config.MODEL.ATROUS_RATE = atrous_rate
 
     config.TRAIN.SHUFFLE = True
+    crop_size = (512,512)
     config.TRAIN.IMAGE_SIZE = list(crop_size)
 
     config.TRAIN.LR = init_lr
@@ -166,22 +166,9 @@ def train(data_root,record_root,cuda_visible_devices='0,1'):
     # 确定网络及backbone
     backbone,net,pretrained_path = AutoTrainer.Find_Network(num_class)
 
-    # # # 创建logger并生成输出路径
-    # config.OUTPUT_DIR = record_root
-    # AutoTrainer.Creat_Logger(cfg=config, phase='train')
-    # AutoTrainer.logger.info(config)
-
-    # # 保存训练参数到json
-    # train_param_dict = {'crop_size':list(crop_size),'nclass':int(num_class),'backbone':backbone,'net':net}
-    #
-    # with open(os.path.join(AutoTrainer.final_output_dir,"param.json"),"w") as f:
-    #     json.dump(train_param_dict,f)
-    #     print("save param file at %s successfully!"%(AutoTrainer.final_output_dir))
-
     world_size = 2
     mp.spawn(train_main_worker,nprocs=2,args=(world_size,data_root,record_root,
-                                              num_class,crop_size,epoch,backbone,net,pretrained_path,
-                                              cuda_visible_devices))
+                                              num_class,crop_size,epoch,backbone,net,pretrained_path))
     return AutoTrainer.final_output_dir
 
 
@@ -193,8 +180,7 @@ def test(data_root,output_root,cuda_visible_devices='0,1'):
         param_dict = json.load(f)
     os.environ['CUDA_VISIBLE_DEVICES'] = cuda_visible_devices
 
-    AutoTestor.Creat_Logger(output_dir=output_root, phase='test')
-    AutoTestor.logger.info(pprint.pformat(config))
+
 
     # 更新test config
     config.GPUS = [0,1]
@@ -206,9 +192,11 @@ def test(data_root,output_root,cuda_visible_devices='0,1'):
     config.MODEL.BACKBONE = param_dict['backbone']
 
     config.TEST.IMAGE_SIZE = param_dict['crop_size']
+    config.TEST.BASE_SIZE = max(config.TEST.IMAGE_SIZE)
+
     # TODO
     config.TEST.SCALE_LIST = [0.5,1.0,1.5]
-    config.TEST.MODEL_FILE = os.path.join(AutoTestor.final_output_dir,'final_state.pth')
+    config.TEST.MODEL_FILE = os.path.join(output_root,'final_state.pth')
     if config.MODEL.NAME == 'seg_hrnet':
         config.MODEL.NUM_OUTPUTS = 1
     else:
@@ -219,6 +207,8 @@ def test(data_root,output_root,cuda_visible_devices='0,1'):
     cudnn.benchmark = True
     cudnn.deterministic = False
     cudnn.enabled = True
+    AutoTestor.Creat_Logger(output_dir=output_root, phase='test')
+    AutoTestor.logger.info(pprint.pformat(config))
 
     # 创建数据集
     AutoTestor.Build_Dataset(cfg=config)
