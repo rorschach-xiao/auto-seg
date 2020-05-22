@@ -10,7 +10,7 @@ except:
     print("You don't seem to have Cython installed.")
     sys.exit(1)
 
-exclude_path = ["scripts", "experiments", "start_server.py"]
+exclude_path = ["scripts", "experiments", "start_server.py", "auto_run.py", "auto_helper.py"]
 
 def in_excluded(path):
     for ex_path in exclude_path:
