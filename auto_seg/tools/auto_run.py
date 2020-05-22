@@ -263,6 +263,7 @@ class InferenceJob(BaseDataset):
 
 
     def _load_model(self):
+        AutoTestor.Creat_Logger(output_dir, 'test')
         AutoTestor.Build_Model(cfg=self.cfg)
         self.model = AutoTestor.model
 
