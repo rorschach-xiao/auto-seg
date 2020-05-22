@@ -25,7 +25,7 @@ class OPTIC(BaseDataset):
         item = self.files[index]
         name = item["name"]
         image = cv2.imread(os.path.join(self.root,
-                                        'optic_disc_seg/', item["img"]), cv2.IMREAD_COLOR)
+                                        'optic/', item["img"]), cv2.IMREAD_COLOR)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         if 'test' in self.list_path and 'val' not in self.list_path:
             size = image.shape
@@ -34,7 +34,7 @@ class OPTIC(BaseDataset):
             return image, np.array(size), name
         else:
             label = cv2.imread(os.path.join(self.root,
-                                            'optic_disc_seg',item["label"]),cv2.IMREAD_GRAYSCALE)
+                                            'optic',item["label"]),cv2.IMREAD_GRAYSCALE)
             label[label==38]=1
             size = label.shape
             if self.transform!=None:

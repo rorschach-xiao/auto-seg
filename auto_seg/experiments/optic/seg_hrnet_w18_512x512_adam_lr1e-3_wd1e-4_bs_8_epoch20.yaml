@@ -48,7 +48,6 @@ TRAIN:
                'totensor',
                'normalize']
   RANDOM_ANGLE_DEGREE: 10
-  NONBACKBONE_KEYWORDS: ['last_layer']
 VAL:
   TRANS_LIST: ['resize',
                'totensor',

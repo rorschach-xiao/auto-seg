@@ -56,8 +56,8 @@ def train_main_worker(local_rank,
     config.MODEL.ATROUS_RATE = atrous_rate
 
     config.TRAIN.SHUFFLE = True
-    crop_size = (512,512)
     config.TRAIN.IMAGE_SIZE = list(crop_size)
+    print(crop_size)
     config.TRAIN.BASE_SIZE = max(config.TRAIN.IMAGE_SIZE)
 
     config.TRAIN.LR = init_lr
@@ -163,6 +163,7 @@ def train(data_root,record_root,cuda_visible_devices='0,1'):
 
     # 确定 crop_size 和 类别数量
     crop_size,num_class = AutoTrainer.Find_Crop_Size_And_NClass(trainloader)
+    print(crop_size)
 
     # 确定训练epoch
     epoch = AutoTrainer.Find_Epoch(num_class=num_class,dataset=train_dataset)
@@ -171,7 +172,8 @@ def train(data_root,record_root,cuda_visible_devices='0,1'):
     backbone,net,pretrained_path = AutoTrainer.Find_Network(num_class)
 
     world_size = 2
-    queue = mp.Queue()
+    ctx = mp.get_context('spawn')
+    queue = ctx.Queue()
     mp.spawn(train_main_worker,nprocs=2,args=(world_size,queue,data_root,record_root,
                                               num_class,crop_size,epoch,backbone,net,pretrained_path,))
     return queue.get(block = False)

@@ -234,7 +234,7 @@ class AutoTrainer():
         if min(avg_h,avg_w)>600 or max(avg_h,avg_w)>1000:
             crop_size = (520,520)
         else:
-            crop_size = (int(avg_w),int(avg_h))
+            crop_size = (int(avg_h),int(avg_w))
         AutoTrainer.crop_size=crop_size
         if nclass==1:
             return crop_size,nclass
