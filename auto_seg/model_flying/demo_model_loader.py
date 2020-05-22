@@ -2,6 +2,7 @@ import os
 import shutil
 import cv2
 import logging
+import os
 
 from tools import auto_run
 
@@ -17,7 +18,7 @@ def has_model_params_file_under_folder(ckpt_path):
 
 
 class Model_Loader(object):
-    def __init__(self):
+    def __init__(self, visible_devices_list):
         """
         model loader for web demo
         """
@@ -25,6 +26,7 @@ class Model_Loader(object):
         self.inferer = None
 
         self.status = 'non-trained'
+        self.visible_devices_list = visible_devices_list
 
         self.__load_models()
 
@@ -36,7 +38,7 @@ class Model_Loader(object):
                 self.ckpt_path = os.path.join(EXP_FOLDER, folders[0])
 
         if self.ckpt_path and has_model_params_file_under_folder(self.ckpt_path):
-            self.inferer = auto_run.InferenceJob(self.ckpt_path)
+            self.inferer = auto_run.InferenceJob(self.ckpt_path, self.visible_devices_list)
             self.status = 'trained'
 
             return True
@@ -47,11 +49,16 @@ class Model_Loader(object):
 
     def inference(self, image):
         try:
-            tmp_file_path = 'static/img/inference_results.jpg'
+            sub_folder = 'static/img'
+            full_folder =  os.path.join('model_flying', sub_folder)
+            img_name = 'inference_results.png'
+            if not os.path.isdir(full_folder):
+                os.makedirs(full_folder)
+            tmp_file_path = os.path.join(full_folder, img_name)
             output_img = self.inferer._run(image)
-            cv2.imwrite(output_img, tmp_file_path)
+            cv2.imwrite(tmp_file_path, output_img)
 
-            return tmp_file_path
+            return os.path.join(sub_folder, img_name)
         except Exception as e:
             print(e, flush = True)
             logging.exception(e)
@@ -60,7 +67,8 @@ class Model_Loader(object):
 
     def train(self, dataset_path):
         try:
-            ckpt_path = auto_run.train(dataset_path, EXP_FOLDER, '6,7')
+            ckpt_path = auto_run.train(dataset_path, EXP_FOLDER, self.visible_devices_list)
+            print('---------------------->', ckpt_path, flush=True)
         except Exception as e:
             print(e, flush = True)
             logging.exception(e)
@@ -84,9 +92,8 @@ class Model_Loader(object):
     def test(self, dataset_path):
         if not self.ckpt_path:
             return
-
         try:
-            results = auto_run.test(dataset_path, self.ckpt_path)
+            results = auto_run.test(dataset_path, self.ckpt_path, self.visible_devices_list)
         except Exception as e:
             print(e, flush = True)
             logging.exception(e)

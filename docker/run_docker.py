@@ -151,11 +151,12 @@ def start_server(args):
                                             os.path.join(os.path.abspath("."), "data"),
                                             DATA_DES_DIR)
     start_cmd = "docker run --name {} -p {}:{} --shm-size=32G --gpus all {} {} " \
-                "python tools/start_server.py --port {}".format(CONTAINER_NAME,
+                "python tools/start_server.py --port {}  --visible_devices_list {}".format(CONTAINER_NAME,
                                                                         args.port,
                                                                         args.port,
                                                                         dev_mount,
                                                                         DOCKER_IMAGE,
-                                                                        args.port)
+                                                                        args.port,
+                                                                        args.visible_devices_list)
     # print(start_cmd)
     os.system(start_cmd)

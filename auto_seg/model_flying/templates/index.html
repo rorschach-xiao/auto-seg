@@ -127,8 +127,9 @@
                         resetForm: true,
                         success:function(result){
                             if (result.return == "success") {
-                                $('#inference_text').html("推理完成，下面是推理产生的图片地址:\n" + result.predict);
-                                $('#inferresult').attr('src',result.predict+'?'+Math.random())
+                                $('#inference_text').html("推理完成，下面是推理产生的预测标签图片地址:\n"
+                                    +window.location.host+"/"+ result.predict);
+                                $('#inferresult').attr('src',result.predict+'?'+Math.random());
                             }
                             else {
                                 $('#inference_text').html("推理失败! 请检查错误或联系管理员:\n" + result.return);
