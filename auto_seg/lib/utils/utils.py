@@ -18,6 +18,7 @@ from config import config
 import torch
 import torch.nn as nn
 
+
 class FullModel(nn.Module):
   """
   Distribute the loss on multi-gpu to reduce
@@ -143,5 +144,43 @@ def adjust_learning_rate(optimizer, base_lr, max_iters,
     return lr
 
 
-def check_data_format(data_root,data_list):
-    pass
+def check_data_format(data_root,list_file):
+    legal_tail_format = ["jpg","png","tiff","jpge"]
+    with open(os.path.join(data_root,list_file),"r") as f:
+        for line in f:
+            data_pair = line.strip().split()
+            # 检查训练图片是否和标签一一对应
+            if len(data_pair)!=2:
+                raise ValueError("image and label are not one-to-one: {} !".format(line))
+            image_path,label_path = data_pair
+            # 检查训练图片和标签路径是否正确
+            if not (os.path.exists(os.path.join(data_root,image_path)) or
+                os.path.exists(os.path.join(data_root,label_path))):
+                raise FileNotFoundError("missing images or labels: {} !".format(line))
+            # 检查训练图片和标签格式是否正确
+            img_tail = os.path.basename(image_path).split(".")[1]
+            label_tail = os.path.basename(label_path).split(".")[1]
+            if img_tail not in legal_tail_format or label_tail not in legal_tail_format:
+                raise ValueError("unsupported data format: {} !".format(line))
+            # 检查训练图片和标签尺寸是否一致
+            import cv2
+            img = cv2.imread(os.path.join(data_root,image_path),cv2.IMREAD_COLOR)
+            label = cv2.imread(os.path.join(data_root,image_path),cv2.IMREAD_GRAYSCALE)
+            if img.shape[:2] != label.shape[:2]:
+                raise ValueError("shape of the image {} do not match shape of the label {}".format(img.shape,label.shape))
+
+        print("========Data Checked Completely!========")
+
+
+
+
+
+
+
+
+
+
+
+
+
+    

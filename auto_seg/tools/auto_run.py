@@ -197,7 +197,7 @@ def test(data_root,output_root,cuda_visible_devices='0,1'):
     config.MODEL.NAME = param_dict['net']
     config.MODEL.BACKBONE = param_dict['backbone']
 
-    config.TEST.IMAGE_SIZE = param_dict['crop_size']
+    config.TEST.IMAGE_SIZE = param_dict['crop_size'][::-1] #(w,h)
     config.TEST.BASE_SIZE = max(config.TEST.IMAGE_SIZE)
 
     # TODO
