@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import argparse
 
 import torch
 import torch.backends.cudnn as cudnn
@@ -15,7 +16,7 @@ from config import config
 import datasets
 from datasets.base_dataset import BaseDataset
 
-from .auto_helper import *
+from tools.auto_helper import *
 from tensorboardX import SummaryWriter
 
 

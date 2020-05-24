@@ -77,7 +77,7 @@ class Model_Loader(object):
         if not ckpt_path:
             return False
 
-        if self.ckpt_path and self.inferer:
+        if self.ckpt_path and self.inferer is not None:
             del self.inferer
             shutil.rmtree(self.ckpt_path)
 
@@ -109,4 +109,3 @@ class Model_Loader(object):
 
     def set_status(self, status):
         self.status = status
-

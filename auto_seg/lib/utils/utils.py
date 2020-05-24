@@ -144,7 +144,13 @@ def adjust_learning_rate(optimizer, base_lr, max_iters,
     return lr
 
 
-def check_data_format(data_root,list_file):
+def check_data_format(data_root, is_training_data):
+    assert isinstance(is_training_data, bool), 'is_training_data must be instance of bool'
+    if is_training_data:
+        list_file = 'train.txt'
+    else:
+        list_file = 'testval.txt'
+
     legal_tail_format = ["jpg","png","tiff","jpge"]
     with open(os.path.join(data_root,list_file),"r") as f:
         for line in f:

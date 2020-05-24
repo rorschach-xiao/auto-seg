@@ -20,7 +20,7 @@
                 //debugger
                 $('#uploadFile_train').ajaxSubmit({
                     type:'post',
-                    url:"classify/upload/train",
+                    url:"segment/upload/train",
                     processData: false, //需设置为false,因为data值是FormData对象，不需要对数据做处理
                     contentType: false,
                     resetForm: true,  //成功提交后，是否重置所有表单元素的值
@@ -57,7 +57,7 @@
                 //debugger
                 $('#uploadFile_test').ajaxSubmit({
                     type:'post',
-                    url:"classify/upload/test",
+                    url:"segment/upload/test",
                     processData: false, //需设置为false,因为data值是FormData对象，不需要对数据做处理
                     contentType: false,
                     resetForm: true,  //成功提交后，是否重置所有表单元素的值
@@ -99,7 +99,7 @@
 
 
                 $.ajax({
-                    url: "classify/get_status",
+                    url: "segment/get_status",
                     type: "GET",
                     contentType: "application/json;charset=utf-8",
                     dataType: "text",
@@ -121,7 +121,7 @@
 
                         $('#inference').ajaxSubmit({
                         type:'post',
-                        url:"classify/inference",
+                        url:"segment/inference",
                         processData: false,
                         contentType: false,
                         resetForm: true,
@@ -152,7 +152,7 @@
     <script type=text/javascript>
         $(function() {
             $.ajax({
-                url: "classify/get_status",
+                url: "segment/get_status",
                 type: "GET",
                 contentType: "application/json;charset=utf-8",
                 dataType: "text",
@@ -182,7 +182,7 @@
     <script>
         function ask_train_status() {
             $.ajax({
-                url: "classify/get_status",
+                url: "segment/get_status",
                 type: "GET",
                 contentType: "application/json;charset=utf-8",
                 dataType: "text",
@@ -203,7 +203,7 @@
 
         function ask_test_status() {
             $.ajax({
-                url: "classify/get_status",
+                url: "segment/get_status",
                 type: "GET",
                 contentType: "application/json;charset=utf-8",
                 dataType: "text",
@@ -224,7 +224,7 @@
 
         function start_train() {
             $.ajax({
-                url: "classify/get_status",
+                url: "segment/get_status",
                 type: "GET",
                 contentType: "application/json;charset=utf-8",
                 dataType: "text",
@@ -240,7 +240,7 @@
                     }
 
                     $.ajax({
-                        url : "classify/train",
+                        url : "segment/train",
                         type : "POST",
                         async : true,
                         contentType: "application/json;charset=utf-8",
@@ -272,7 +272,7 @@
 
         function start_test() {
             $.ajax({
-                url: "classify/get_status",
+                url: "segment/get_status",
                 type: "GET",
                 contentType: "application/json;charset=utf-8",
                 timeout: 0,
@@ -293,7 +293,7 @@
                     }
 
                     $.ajax({
-                        url : "classify/test",
+                        url : "segment/test",
                         type : "POST",
                         contentType: "application/json;charset=utf-8",
                         // {#async : true,#}
@@ -364,7 +364,7 @@
     <hr>
     <br>
     <div style="text-align: center">
-        <form id="uploadFile_train" action="classify/upload/train" enctype="multipart/form-data">
+        <form id="uploadFile_train" action="segment/upload/train" enctype="multipart/form-data">
             <input type="file" name="file_train" id="file_train">
             <input type="button" value="上传训练数据集" id="upload_train">
         </form>
@@ -391,7 +391,7 @@
     <hr>
 
         <div style="text-align: center">
-        <form id="uploadFile_test" action="classify/upload/test" enctype="multipart/form-data" >
+        <form id="uploadFile_test" action="segment/upload/test" enctype="multipart/form-data" >
             <input type="file" name="file_test" id = "file_test">
             <input type="button" value="上传测试数据集" id="upload_test">
         </form>
@@ -417,7 +417,7 @@
     <hr>
 
     <div style="text-align: center">
-        <form id="inference" action="classify/inference" enctype="multipart/form-data" >
+        <form id="inference" action="segment/inference" enctype="multipart/form-data" >
             <input type="file" name="file_inference" id = "file_inference">
             <input type="button" value="开始推理" id="upload_inference">
         </form>

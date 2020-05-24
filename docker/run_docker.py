@@ -102,7 +102,7 @@ def start_train(args):
     # dev_mount = "-v {}:{} -v {}:{} -v {}:{}".format(args.dataset_path,
     dev_mount = "-v {}:{} -v {}:{}".format(args.dataset_path,
                                                    DATA_DES_DIR,
-                                                   os.path.join(os.path.abspath("."), "records"),
+                                                   args.model_path,
                                                    RECORD_DST_DIR,)
                                                    # os.path.join(os.path.abspath("."), "logs"),
                                                    # LOGS_DST_DIR)

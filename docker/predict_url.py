@@ -6,7 +6,7 @@ import time
 
 def train(dataset_path, ip = '0.0.0.0', port = 5001):
     # 先上传数据，如果数据较大上传时间可能会很长
-    upload_url = 'http://{}:{}/classify/upload/train'.format(ip, port)
+    upload_url = 'http://{}:{}/segment/upload/train'.format(ip, port)
     with open(dataset_path, 'rb') as f:
         r = requests.post(upload_url, files={'file_train': f})
         print(r.text)
@@ -18,7 +18,7 @@ def train(dataset_path, ip = '0.0.0.0', port = 5001):
     print('upload dataset success')
 
     # 发起训练
-    train_url = 'http://{}:{}/classify/train'.format(ip, port)
+    train_url = 'http://{}:{}/segment/train'.format(ip, port)
     # 一般训练时间很长，这个接口返回可能需要很久，数据量大的话可能需要几天，此处建议设置timeout,
     # 超时后，通过轮询请求目前系统的状态
     try:
@@ -35,7 +35,7 @@ def train(dataset_path, ip = '0.0.0.0', port = 5001):
     # non-trained: 表示没有训练，后台正在闲置，没有训练不能发送批量测试、推理，只能发送训练请求
     # testing: 表示正在批量测试中，批量测试中不能发送再次批量测试、推理和再次训练
     # tested: 表示正在批量测试完成，这个状态是瞬间状态，只在调用批量测试接口后返回
-    status_url = 'http://{}:{}/classify/get_status'.format(ip, port)
+    status_url = 'http://{}:{}/segment/get_status'.format(ip, port)
     while True:
         r = requests.get(status_url)
         print(r)
@@ -54,7 +54,7 @@ def train(dataset_path, ip = '0.0.0.0', port = 5001):
 
 def test(dataset_path, ip = '0.0.0.0', port = 5001):
     # 先上传数据，如果数据较大上传时间可能会很长
-    upload_url = 'http://{}:{}/classify/upload/test'.format(ip, port)
+    upload_url = 'http://{}:{}/segment/upload/test'.format(ip, port)
     with open(dataset_path, 'rb') as f:
         r = requests.post(upload_url, files={'file_test': f})
         print(r.text)
@@ -66,7 +66,7 @@ def test(dataset_path, ip = '0.0.0.0', port = 5001):
     print('upload dataset success')
 
     # 发起测试
-    test_url = 'http://{}:{}/classify/test'.format(ip, port)
+    test_url = 'http://{}:{}/segment/test'.format(ip, port)
     # 一般测试时间略长
     r = requests.post(test_url)
     format_ret = json.loads(r.text)
@@ -78,11 +78,21 @@ def test(dataset_path, ip = '0.0.0.0', port = 5001):
     print(records)
 
 
-def classify(img, ip = '0.0.0.0', port = 5001):
-    url = 'http://{}:{}/classify/inference'.format(ip, port)
+def segment(img, ip = '0.0.0.0', port = 5001):
+    req_url = 'http://{}:{}/segment/inference'.format(ip, port)
+
+    # 发起推理请求
     with open(img, 'rb') as f:
-        r = requests.post(url, files = {'file_inference' : f})
-        return r.text
+        r = requests.post(req_url, files = {'file_inference' : f})
+
+    # 下载推理标签图片文件
+    results = json.loads(r.text)
+    download_url = 'http://{}:{}/{}'.format(ip, port, results['predict'])
+    r = requests.get(download_url)
+    save_file_name = img.split('/')[-1].split('.')[0] + '_predict.png'
+    with open(save_file_name, 'wb') as f:
+        f.write(r.content)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="远程访问模型进行图片预测工具")
@@ -113,6 +123,6 @@ if __name__ == '__main__':
     elif args.subcommand == 'test':
         test(args.file, args.ip, args.port)
     elif args.subcommand == 'infer':
-        predict = classify(args.image, args.ip, args.port)
+        predict = segment(args.image, args.ip, args.port)
         print(predict)
 
