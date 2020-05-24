@@ -27,6 +27,7 @@ def train_main_worker(local_rank,
                       num_class,
                       crop_size = (512,512),
                       epoch = 40,
+                      aug_type = "resize",
                       backbone = "hrnet18",
                       model_name = "seg_hrnet",
                       pretrained_path = 'pretrained_models/hrnetv2_w18_imagenet_pretrained.pth',
@@ -64,20 +65,34 @@ def train_main_worker(local_rank,
     config.TRAIN.IGNORE_LABEL = ignore_label
     config.TRAIN.END_EPOCH = epoch
     config.TRAIN.OPTIMIZER = optimizer
-    config.TRAIN.RANDOM_ANGLE_DEGREE= 20
-    config.TRAIN.RANDOM_SCALE_MIN= 0.5
-    config.TRAIN.RANDOM_SCALE_MAX= 1.5
 
-
-    config.TRAIN.TRANS_LIST= ['resize',
-                              'random_rotate',
-                              'random_blur',
-                              'random_hflip',
-                              'totensor',
-                              'normalize']
-    config.VAL.TRANS_LIST= ['resize',
-                            'totensor',
-                            'normalize']
+    if aug_type == "resize":
+        config.TRAIN.TRANS_LIST = ['resize',
+                                  'random_rotate',
+                                  'random_blur',
+                                  'random_hflip',
+                                  'totensor',
+                                  'normalize']
+        config.VAL.TRANS_LIST = ['resize',
+                                'totensor',
+                                'normalize']
+        config.TRAIN.RANDOM_ANGLE_DEGREE = 20
+        config.TRAIN.RANDOM_SCALE_MIN = 0.5
+        config.TRAIN.RANDOM_SCALE_MAX = 1.5
+    elif aug_type == "crop":
+        config.TRAIN.TRANS_LIST = ['random_scale',
+                                   'random_rotate',
+                                   'random_blur',
+                                   'random_hflip',
+                                   'crop',
+                                   'totensor',
+                                   'normalize']
+        config.VAL.TRANS_LIST = ['crop',
+                                 'totensor',
+                                 'normalize']
+        config.TRAIN.RANDOM_ANGLE_DEGREE = 10
+        config.TRAIN.RANDOM_SCALE_MIN = 0.5
+        config.TRAIN.RANDOM_SCALE_MAX = 2.0
 
     if config.DATASET.NUM_CLASSES>2:
         config.LOSS.TYPE = "CE"
@@ -161,9 +176,8 @@ def train(data_root,record_root,cuda_visible_devices='0,1'):
 
     trainloader = torch.utils.data.DataLoader(train_dataset,batch_size=1)
 
-    # 确定 crop_size 和 类别数量
-    crop_size,num_class = AutoTrainer.Find_Crop_Size_And_NClass(trainloader)
-    print(crop_size)
+    # 确定 crop_size , 类别数量以及增强策略
+    crop_size,num_class,aug_type = AutoTrainer.Find_Crop_Size_And_NClass(trainloader)
 
     # 确定训练epoch
     epoch = AutoTrainer.Find_Epoch(num_class=num_class,dataset=train_dataset)
@@ -175,7 +189,7 @@ def train(data_root,record_root,cuda_visible_devices='0,1'):
     ctx = mp.get_context('spawn')
     queue = ctx.Queue()
     mp.spawn(train_main_worker,nprocs=2,args=(world_size,queue,data_root,record_root,
-                                              num_class,crop_size,epoch,backbone,net,pretrained_path,))
+                                              num_class,crop_size,epoch,aug_type,backbone,net,pretrained_path,))
     return queue.get(block = False)
 
 
@@ -252,7 +266,7 @@ class InferenceJob(BaseDataset):
         config.DATASET.NUM_CLASSES = self.param_dict['nclass']
 
         # TODO
-        config.TEST.IMAGE_SIZE = self.param_dict['crop_size']
+        config.TEST.IMAGE_SIZE = self.param_dict['crop_size'][::-1] #(w,h)
         config.TEST.BASE_SIZE = max(config.TEST.IMAGE_SIZE)
         config.TEST.SCALE_LIST = [0.5, 1.0, 1.5]
         config.TEST.MODEL_FILE = os.path.join(output_root, 'final_state.pth')

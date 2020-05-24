@@ -42,6 +42,7 @@ class AutoTrainer():
     crop_size=None
 
 
+
     def __init__(self):
         pass
 
@@ -233,13 +234,16 @@ class AutoTrainer():
             avg_w = (avg_w*idx+ori_w)/(idx+1)
         if min(avg_h,avg_w)>600 or max(avg_h,avg_w)>1000:
             crop_size = (520,520)
+            aug_type = "crop"
         else:
             crop_size = (int(avg_h),int(avg_w))
+            aug_type = "resize"
         AutoTrainer.crop_size=crop_size
         if nclass==1:
-            return crop_size,nclass
+            return crop_size,nclass,aug_type
         else:
-            return crop_size,nclass+1
+            aug_type = "crop"
+            return crop_size,nclass+1,aug_type
 
     @staticmethod
     def Find_Epoch(num_class,dataset):
