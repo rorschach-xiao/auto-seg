@@ -32,7 +32,7 @@ def index():
     return render_template('index.html')
 
 
-@app.route('/classify/upload/<string:t>', methods=['POST'])
+@app.route('/segment/upload/<string:t>', methods=['POST'])
 def upload(t, **kwargs):
     if request.method == 'POST':
         file = request.files['file_' + t]
@@ -70,7 +70,7 @@ def upload(t, **kwargs):
     return {'return': 'error'}
 
 
-@app.route('/classify/train', methods=['POST'])
+@app.route('/segment/train', methods=['POST'])
 def train():
     global train_data_path
     if not train_data_path:
@@ -86,7 +86,7 @@ def train():
     return {'return': 'failed'}
 
 
-@app.route('/classify/test', methods=['POST'])
+@app.route('/segment/test', methods=['POST'])
 def test():
     global test_data_path
     global test_results
@@ -102,7 +102,7 @@ def test():
     return {'return': 'failed', 'records': ''}
 
 
-@app.route('/classify/get_status', methods=['GET'])
+@app.route('/segment/get_status', methods=['GET'])
 def get_status():
     global test_results
     status = model.get_status()
@@ -113,7 +113,7 @@ def get_status():
     return {'return': status}
 
 
-@app.route('/classify/inference', methods=['POST'])
+@app.route('/segment/inference', methods=['POST'])
 def inference():
     f = request.files['file_inference']
     data = f.read()
