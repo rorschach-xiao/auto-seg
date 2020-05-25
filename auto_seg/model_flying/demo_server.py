@@ -1,4 +1,5 @@
 from model_flying.demo_model_loader import Model_Loader
+from utils.utils import check_data_format
 from flask import Flask, request, render_template
 from werkzeug.utils import secure_filename
 from gevent.pywsgi import WSGIServer
@@ -50,8 +51,7 @@ def upload(t, **kwargs):
             data_path = '.'.join(data_path.split('.')[0:-1])
             # check data validity
             try:
-                # onefile_dataset_validity_check(data_path, 'train.txt')
-                pass
+                check_data_format(data_path, True if t == 'train' else False)x
             except Exception as e:
                 print(e)
                 return {'return': 'dataset invalid'}
