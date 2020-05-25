@@ -146,6 +146,42 @@
                 });
             });
 
+            $("#upload_inference_video").click(function(){
+                var filepath = $("#file_inference_video").val();
+                if (!isAVI(filepath)){
+                    return false;
+                }
+                //debugger
+                $('#uploadFile_inference_video').ajaxSubmit({
+                    type:'post',
+                    url:"segment/upload/inference_video",
+                    processData: false, //需设置为false,因为data值是FormData对象，不需要对数据做处理
+                    contentType: false,
+                    resetForm: true,  //成功提交后，是否重置所有表单元素的值
+                    uploadProgress: function (event, position, total, percentComplete) {
+                        if(percentComplete > 100){
+                            percentComplete = 100;
+                        }
+                        var percentVal = percentComplete + '%';
+                        $("#uploadFile_rate_inference_video").html(percentVal);
+                        $("#uploadFile_progressBar_inference_video").width(percentVal);
+                    },
+                   success:function(result){
+                        console.log(result)
+                        var log = "上传文件成功！";
+                        if (result.return != "success"){
+                            log = "上传文件失败: " + result.return;
+                        }
+                        alert(log);
+                        $("#uploadFile_progressBar_inference_video").width("0px"); // 进度条状态
+                        $("#uploadFile_rate_inference_video").html("0%");
+                    },
+                    error:function(){
+                        alert("上传文件失败，请重试！");
+                    }
+                });
+            });
+
         });
     </script>
 
@@ -322,6 +358,58 @@
                 }
             });
         }
+
+        function start_inference_video() {
+            $.ajax({
+                url: "segment/get_status",
+                type: "GET",
+                contentType: "application/json;charset=utf-8",
+                timeout: 0,
+                dataType: "text",
+                success: function (result) {
+                    result = $.parseJSON(result);
+                    if (result.return == "training"){
+                        alert("模型正在训练中，请训练完成后再提交测试任务");
+                        return;
+                    }
+                    else if (result.return == "testing"){
+                        alert("模型正在测试中，请勿重复提交测试任务");
+                        return;
+                    }
+                    else if (result.return == "non-trained"){
+                        alert("模型尚未训练过，请先提交训练任务");
+                        return;
+                    }
+
+                    $.ajax({
+                        url : "segment/inference_video",
+                        type : "POST",
+                        contentType: "application/json;charset=utf-8",
+                        // {#async : true,#}
+                        dataType : "text",
+                        // {#timeout: 0,#}
+                        success : function(result) {
+                                result = $.parseJSON(result);
+                                console.log(result)
+                                if (result.return == "success") {
+                                    $('#inference_video_text').html("推理完成，下面是推理产生的预测视频地址:\n"
+                                                                +window.location.host+"/"+ result.records);
+                                }
+                                else if (result.return == "no data"){
+                                    $('#inference_video_text').html("请先上传测试数据");
+                                }
+                                else {
+                                    $('#inference_video_text').html("视频推理失败！\n请检查错误或联系管理员\n" + result.records);
+                                }
+                            }
+                    });
+                },
+                error: function (msg) {
+                    $('#inference_video_text').html('Error:' + msg)
+                }
+            });
+        }
+
     </script>
 
     <script>
@@ -340,6 +428,16 @@
             var ext = filepath.substring(extStart, filepath.length).toUpperCase();
             if (ext != '.JPEG' && ext != '.JPG' && ext != '.PNG' ) {
                 alert("图片格式只能是JPG或者PNG格式文件!");
+                return false;
+            }
+            return true;
+        }
+
+        function isAVI(filepath) {
+            var extStart = filepath.lastIndexOf(".");
+            var ext = filepath.substring(extStart, filepath.length).toUpperCase();
+            if (ext != '.AVI') {
+                alert("目前仅支持avi格式视频文件!");
                 return false;
             }
             return true;
@@ -433,6 +531,33 @@
                       rows="7" readonly="true" style = "resize:none;overflow:scroll;color:#747474"></textarea>
             </div>
         </div>
+    </div>
+
+    <br>
+    <br>
+    <h2 style="text-align: center">视 频 推 理</h2>
+    <hr>
+
+    <div style="text-align: center">
+        <form id="uploadFile_inference_video" action="segment/upload/inference_video" enctype="multipart/form-data" >
+            <input type="file" name="file_inference_video" id = "file_inference_video">
+            <input type="button" value="上传视频文件" id="upload_inference_video">
+        </form>
+        <p></p>
+        <div class="progress" style="width: 700px;margin: auto">
+            <div id="uploadFile_progressBar_inference_video" class="progress-bar" role="progressbar" aria-valuenow="60"
+                aria-valuemin="0" aria-valuemax="100" style="min-width: 2em;">
+                <span id="uploadFile_rate_inference_video">0%</span>
+            </div>
+        </div>
+            <br>
+        <div>
+            <button onclick = "start_inference_video()">开始推理</button>
+        </div>
+        <br>
+        <textarea id="inference_video_text" name="inference_video_text" cols="60"
+                  rows="5" readonly="true" style = "resize:none;overflow:scroll;color:#747474"></textarea>
+
     </div>
 
 </body>

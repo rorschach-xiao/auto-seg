@@ -9,6 +9,7 @@ import os
 
 train_data_path = ''
 test_data_path = ''
+inference_video_path=''
 UPLOAD_FOLDER = '/home/root/dataset'
 test_results = {}
 
@@ -38,32 +39,42 @@ def upload(t, **kwargs):
     if request.method == 'POST':
         file = request.files['file_' + t]
         if file:
-            filename = secure_filename(file.filename)
-            data_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            file.save(data_path)
+            if t != 'inference_video':
+                filename = secure_filename(file.filename)
+                data_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                file.save(data_path)
 
-            # unzip dataset
-            if not unzip_file(data_path, app.config['UPLOAD_FOLDER']):
-                print('unzip error')
-                return {'return': 'zip file error'}
+                # unzip dataset
+                if not unzip_file(data_path, app.config['UPLOAD_FOLDER']):
+                    print('unzip error')
+                    return {'return': 'zip file error'}
 
-            # dataset directory
-            data_path = '.'.join(data_path.split('.')[0:-1])
-            # check data validity
-            try:
-                check_data_format(data_path, True if t == 'train' else False)
-            except Exception as e:
-                print(e)
-                return {'return': 'dataset invalid'}
+                # dataset directory
+                data_path = '.'.join(data_path.split('.')[0:-1])
+                # check data validity
+                try:
+                    check_data_format(data_path, True if t == 'train' else False)
+                except Exception as e:
+                    print(e)
+                    return {'return': 'dataset invalid'}
 
-            if t == 'train':
-                global train_data_path
-                train_data_path = data_path
-                print(train_data_path)
+                if t == 'train':
+                    global train_data_path
+                    train_data_path = data_path
+                    print(train_data_path)
+                else:
+                    global test_data_path
+                    test_data_path = data_path
+                    print(test_data_path)
             else:
-                global test_data_path
-                test_data_path = data_path
-                print(test_data_path)
+                filename = secure_filename(file.filename)
+                data_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                file.save(data_path)
+
+                global inference_video_path
+                inference_video_path = data_path
+
+                print('inference_video_path: {}'.format(inference_video_path), flush=True)
 
             return {'return': 'success'}
 
@@ -118,6 +129,30 @@ def inference():
     f = request.files['file_inference']
     data = f.read()
     return {'return': 'success', 'predict' : model.inference(data)}
+
+
+@app.route('/segment/inference_video', methods=['POST'])
+def inference_video():
+    global inference_video_path
+    if not inference_video_path:
+        return {'return': 'no data'}
+
+    model.set_status('testing')
+
+    sub_folder = 'static/video'
+    full_folder = os.path.join(os.path.split(__file__)[0], sub_folder)
+    if not os.path.isdir(full_folder):
+        os.makedirs(full_folder)
+    output_video_name = 'inference_video.avi'
+    tmp_file_path = os.path.join(full_folder, output_video_name)
+
+    ret = model.inference_video(inference_video_path, tmp_file_path)
+    model.set_status('tested')
+    if ret:
+        return {'return': 'success', 'records': os.path.join(sub_folder, output_video_name)}
+    else:
+        return {'return': 'failed', 'records': 'write video file error'}
+
 
 
 def start_server(port, visible_devices_list):

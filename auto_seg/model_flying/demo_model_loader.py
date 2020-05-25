@@ -103,6 +103,19 @@ class Model_Loader(object):
         return results
 
 
+    def inference_video(self, src_video_path, dst_video_path):
+        print('start video inference ...' , flush = True)
+        try:
+            pred_path = self.inferer._run_video(src_video_path)
+            shutil.move(pred_path, dst_video_path)
+            print('video inference end', flush = True)
+        except Exception as e:
+            logging.exception(e)
+            return False
+
+        return True
+
+
     def get_status(self):
         return self.status
 
