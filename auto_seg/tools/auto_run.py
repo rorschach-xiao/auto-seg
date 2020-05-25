@@ -1,5 +1,9 @@
 import cv2
 import numpy as np
+from cv2 import (CAP_PROP_FRAME_WIDTH, CAP_PROP_FRAME_HEIGHT, CAP_PROP_FPS,
+                 CAP_PROP_FRAME_COUNT, CAP_PROP_FOURCC,
+                 CAP_PROP_POS_FRAMES)
+from tqdm import tqdm
 import argparse
 
 import torch
@@ -108,6 +112,7 @@ def train_main_worker(local_rank,
     # 创建logger并生成输出路径
 
     config.OUTPUT_DIR = record_root
+    config.LOG_DIR = "log"
     AutoTrainer.Creat_Logger(cfg=config, phase='train')
     AutoTrainer.logger.info(config)
 
@@ -244,7 +249,6 @@ def test(data_root,output_root,cuda_visible_devices='0,1'):
 
 
 
-
 class InferenceJob(BaseDataset):
     '''
     继承BaseDataset 调用其中multi_scale_inference方法
@@ -284,6 +288,57 @@ class InferenceJob(BaseDataset):
 
         self._load_model()
 
+    @staticmethod
+    def video2frame(video_path,frames_dir,save_gap=1):
+        if not os.path.exists(frames_dir):
+            os.makedirs(frames_dir)
+        if not os.path.exists(video_path):
+            raise FileNotFoundError("Video do not exists!")
+        if not video_path.endswith('.avi'):
+            raise ValueError("only support .avi type video")
+        video_name = os.path.basename(video_path).split(".")[0]
+        vcap = cv2.VideoCapture(video_path)
+        if not vcap.isOpened():
+            raise ValueError("can not open the video!")
+
+        _fps = int(round(vcap.get(CAP_PROP_FPS))) # 获取视频的帧率
+        _width = int(vcap.get(CAP_PROP_FRAME_WIDTH)) # 获取视频的尺寸
+        _height = int(vcap.get(CAP_PROP_FRAME_HEIGHT))
+        codec = int(vcap.get(CAP_PROP_FOURCC)) # 获取视频的编码格式
+        _fourcc = chr(codec & 0xFF) + chr((codec >> 8) & 0xFF) + chr((codec >> 16) & 0xFF) + chr((codec >> 24) & 0xFF)
+        file_name_template = video_name+"_{}.jpg"
+
+        succ,img = vcap.read()
+        FrameNum = 0
+        while(succ):
+            FrameNum = FrameNum+1
+            if FrameNum % save_gap == 0:
+                cv2.imwrite(os.path.join(frames_dir,file_name_template.format(FrameNum)),img)
+            succ, img = vcap.read()
+        return _fps,_height,_width,_fourcc
+
+    @staticmethod
+    def frame2video(frames_dir,
+                    video_name,
+                    video_name_out,
+                    fps,
+                    start,
+                    end,
+                    resolution=(512,512), # (w,h)
+                    fourcc='MJPG',
+                    ):
+        if not video_name.endswith('.avi'):
+            raise ValueError("only support .avi type video")
+        video_file_path = os.path.join(frames_dir,video_name_out)
+        vwriter = cv2.VideoWriter(video_file_path, cv2.VideoWriter_fourcc(*fourcc), fps,
+                                  resolution)
+        print(*fourcc)
+        for i in range(start,end):
+            filename = os.path.join(frames_dir, video_name.split(".")[0]+"_{}.png".format(i))
+            img = cv2.imread(filename)
+            img = cv2.resize(img,resolution)
+            vwriter.write(img)
+        return video_file_path
 
     def _load_model(self):
         AutoTestor.Creat_Logger(self.output_root, 'test')
@@ -323,6 +378,49 @@ class InferenceJob(BaseDataset):
             pred = np.asarray(np.argmax(pred.cpu(), axis=1), dtype=np.uint8)
         pred = pred.squeeze()
         return pred
+
+    def _run_video(self,video_path):
+        frames_dir = os.path.join(*(os.path.split(video_path)[:-1]),"frames_dir")
+        frames_out_dir = os.path.join(*(os.path.split(video_path)[:-1]),"frames_out_dir")
+        if not os.path.exists(frames_out_dir):
+            os.makedirs(frames_out_dir)
+        _fps, _height, _width, _fourcc = InferenceJob.video2frame(video_path,frames_dir,save_gap=1)
+        frames_list = os.listdir(frames_dir)
+        for frame in tqdm(frames_list):
+            frame_name = frame.split(".")[0]
+            img = cv2.imread(os.path.join(frames_dir,frame))
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            img = self.transform(img)
+            img = img.unsqueeze(0)
+            img.to(self.device)
+            size = img.size()
+            pred = self.multi_scale_inference(
+                self.cfg,
+                self.model,
+                img,
+                scales=self.cfg.TEST.SCALE_LIST,
+                flip=self.cfg.TEST.FLIP_TEST,
+                stride_rate=self.cfg.TEST.STRIDE_RATE)
+            pred = torch.from_numpy(np.expand_dims(pred, 0))
+            pred = pred.permute((0, 3, 1, 2))
+            if pred.size()[-2] != size[-2] or pred.size()[-1] != size[-1]:
+                pred = F.interpolate(
+                    pred, size[-2:],
+                    mode='bilinear', align_corners=True
+                )
+            if pred.shape[1] == 1:
+                pred = np.asarray((pred[:, 0, :, :] > 0).cpu(), dtype=np.uint8)
+                pred[pred == 1] = 255
+            else:
+                pred = np.asarray(np.argmax(pred.cpu(), axis=1), dtype=np.uint8)
+            pred = pred.squeeze()
+            cv2.imwrite(os.path.join(frames_out_dir,frame_name+".png"),pred)
+        pred_video_path = InferenceJob.frame2video(frames_out_dir,"out_seg_video.avi",
+                                                   _fps,1,len(frames_list),(_width,_height),_fourcc)
+        return pred_video_path
+
+
+
 
 
 if __name__ == '__main__':

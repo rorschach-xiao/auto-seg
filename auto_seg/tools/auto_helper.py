@@ -225,6 +225,7 @@ class AutoTrainer():
         avg_h = 0.0
         avg_w = 0.0
         nclass = -1
+        print("searching hyper parameters...")
         for idx, batch in enumerate(dataloader):
             image, label, _, _ = batch
             _,ori_h,ori_w,_ = image.shape
@@ -239,6 +240,7 @@ class AutoTrainer():
             crop_size = (int(avg_h),int(avg_w))
             aug_type = "resize"
         AutoTrainer.crop_size=crop_size
+        print("searching done!")
         if nclass==1:
             return crop_size,nclass,aug_type
         else:

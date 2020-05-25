@@ -17,6 +17,7 @@ import numpy as np
 from config import config
 import torch
 import torch.nn as nn
+from tqdm import tqdm
 
 
 class FullModel(nn.Module):
@@ -151,10 +152,11 @@ def check_data_format(data_root, is_training_data):
     else:
         list_files = ['testval.txt']
 
-    legal_tail_format = ["jpg","png","tiff","jpge"]
+    legal_tail_format = ["jpg","png","tif","jpge"]
     for list_file in list_files:
+        print("checking {}...".format(list_file))
         with open(os.path.join(data_root,list_file),"r") as f:
-            for line in f:
+            for line in tqdm(f):
                 data_pair = line.strip().split()
                 # 检查训练图片是否和标签一一对应
                 if len(data_pair)!=2:
