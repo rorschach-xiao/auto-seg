@@ -51,7 +51,7 @@ def upload(t, **kwargs):
             data_path = '.'.join(data_path.split('.')[0:-1])
             # check data validity
             try:
-                check_data_format(data_path, True if t == 'train' else False)x
+                check_data_format(data_path, True if t == 'train' else False)
             except Exception as e:
                 print(e)
                 return {'return': 'dataset invalid'}
