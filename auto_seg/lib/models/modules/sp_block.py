@@ -1,6 +1,7 @@
 import torch.nn as nn
 import torch
 import torch.functional as F
+from models.tools.bn_helper import ModuleHelper
 
 __all__ = ['SPBlock','StripPooling']
 
@@ -9,9 +10,9 @@ class SPBlock(nn.Module):
         super(SPBlock, self).__init__()
         midplanes = outplanes
         self.conv1 = nn.Conv2d(inplanes, midplanes, kernel_size=(3, 1), padding=(1, 0), bias=True)
-        self.bn1 = norm_layer(midplanes)
+        self.bn1 = ModuleHelper.BN(num_features=midplanes, norm_layer=norm_layer)
         self.conv2 = nn.Conv2d(inplanes, midplanes, kernel_size=(1, 3), padding=(0, 1), bias=True)
-        self.bn2 = norm_layer(midplanes)
+        self.bn2 = ModuleHelper.BN(num_features=midplanes, norm_layer=norm_layer)
         self.conv3 = nn.Conv2d(midplanes, outplanes, kernel_size=1, bias=True)
         self.pool1 = nn.AdaptiveAvgPool2d((1, None))
         self.pool2 = nn.AdaptiveAvgPool2d((None, 1))
@@ -30,29 +31,29 @@ class StripPooling(nn.Module):
 
         inter_channels = int(in_channels/4)
         self.conv1_1 = nn.Sequential(nn.Conv2d(in_channels, inter_channels, 1, bias=False),
-                                norm_layer(inter_channels),
+                                ModuleHelper.BN(num_features=inter_channels, norm_layer=norm_layer),
                                 nn.ReLU(True))
         self.conv1_2 = nn.Sequential(nn.Conv2d(in_channels, inter_channels, 1, bias=False),
-                                norm_layer(inter_channels),
+                                ModuleHelper.BN(num_features=inter_channels, norm_layer=norm_layer),
                                 nn.ReLU(True))
         self.conv2_0 = nn.Sequential(nn.Conv2d(inter_channels, inter_channels, 3, 1, 1, bias=False),
-                                norm_layer(inter_channels))
+                                ModuleHelper.BN(num_features=inter_channels, norm_layer=norm_layer))
         self.conv2_1 = nn.Sequential(nn.Conv2d(inter_channels, inter_channels, 3, 1, 1, bias=False),
-                                norm_layer(inter_channels))
+                                ModuleHelper.BN(num_features=inter_channels, norm_layer=norm_layer))
         self.conv2_2 = nn.Sequential(nn.Conv2d(inter_channels, inter_channels, 3, 1, 1, bias=False),
-                                norm_layer(inter_channels))
+                                ModuleHelper.BN(num_features=inter_channels, norm_layer=norm_layer))
         self.conv2_3 = nn.Sequential(nn.Conv2d(inter_channels, inter_channels, (1, 3), 1, (0, 1), bias=False),
-                                norm_layer(inter_channels))
+                                ModuleHelper.BN(num_features=inter_channels, norm_layer=norm_layer))
         self.conv2_4 = nn.Sequential(nn.Conv2d(inter_channels, inter_channels, (3, 1), 1, (1, 0), bias=False),
-                                norm_layer(inter_channels))
+                                ModuleHelper.BN(num_features=inter_channels, norm_layer=norm_layer))
         self.conv2_5 = nn.Sequential(nn.Conv2d(inter_channels, inter_channels, 3, 1, 1, bias=False),
-                                norm_layer(inter_channels),
+                                ModuleHelper.BN(num_features=inter_channels, norm_layer=norm_layer),
                                 nn.ReLU(True))
         self.conv2_6 = nn.Sequential(nn.Conv2d(inter_channels, inter_channels, 3, 1, 1, bias=False),
-                                norm_layer(inter_channels),
+                                ModuleHelper.BN(num_features=inter_channels, norm_layer=norm_layer),
                                 nn.ReLU(True))
         self.conv3 = nn.Sequential(nn.Conv2d(inter_channels*2, in_channels, 1, bias=False),
-                                norm_layer(in_channels))
+                                ModuleHelper.BN(num_features=in_channels, norm_layer=norm_layer))
         # bilinear interpolate options
         self._up_kwargs = up_kwargs
 

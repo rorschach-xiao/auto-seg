@@ -11,6 +11,7 @@ import torch
 import torch.nn as nn
 
 from models.modules.splat import SplAtConv2d
+from models.tools.bn_helper import ModuleHelper
 
 __all__ = ['resnest200', 'resnest101','resnest50']
 
@@ -39,7 +40,7 @@ class Bottleneck(nn.Module):
         super(Bottleneck, self).__init__()
         group_width = int(planes * (bottleneck_width / 64.)) * cardinality
         self.conv1 = nn.Conv2d(inplanes, group_width, kernel_size=1, bias=False)
-        self.bn1 = norm_layer(group_width)
+        self.bn1 = ModuleHelper.BN(num_features=group_width, norm_layer=norm_layer)
         self.dropblock_prob = dropblock_prob
         self.radix = radix
         self.avd = avd and (stride > 1 or is_first)
@@ -71,17 +72,17 @@ class Bottleneck(nn.Module):
                 padding=dilation, dilation=dilation,
                 groups=cardinality, bias=False,
                 average_mode=rectify_avg)
-            self.bn2 = norm_layer(group_width)
+            self.bn2 = ModuleHelper.BN(num_features=group_width, norm_layer=norm_layer)
         else:
             self.conv2 = nn.Conv2d(
                 group_width, group_width, kernel_size=3, stride=stride,
                 padding=dilation, dilation=dilation,
                 groups=cardinality, bias=False)
-            self.bn2 = norm_layer(group_width)
+            self.bn2 = ModuleHelper.BN(num_features=group_width, norm_layer=norm_layer)
 
         self.conv3 = nn.Conv2d(
             group_width, planes * 4, kernel_size=1, bias=False)
-        self.bn3 = norm_layer(planes*4)
+        self.bn3 = ModuleHelper.BN(num_features=planes*4, norm_layer=norm_layer)
 
         if last_gamma:
             from torch.nn.init import zeros_
@@ -181,17 +182,17 @@ class ResNet(nn.Module):
         if deep_stem:
             self.conv1 = nn.Sequential(
                 conv_layer(3, stem_width, kernel_size=3, stride=2, padding=1, bias=False, **conv_kwargs),
-                norm_layer(stem_width),
+                ModuleHelper.BN(num_features=stem_width, norm_layer=norm_layer),
                 nn.ReLU(inplace=True),
                 conv_layer(stem_width, stem_width, kernel_size=3, stride=1, padding=1, bias=False, **conv_kwargs),
-                norm_layer(stem_width),
+                ModuleHelper.BN(num_features=stem_width, norm_layer=norm_layer),
                 nn.ReLU(inplace=True),
                 conv_layer(stem_width, stem_width*2, kernel_size=3, stride=1, padding=1, bias=False, **conv_kwargs),
             )
         else:
             self.conv1 = conv_layer(3, 64, kernel_size=7, stride=2, padding=3,
                                    bias=False, **conv_kwargs)
-        self.bn1 = norm_layer(self.inplanes)
+        self.bn1 = ModuleHelper.BN(num_features=self.inplanes, norm_layer=norm_layer),
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         self.layer1 = self._make_layer(block, 64, layers[0], norm_layer=norm_layer, is_first=False)
@@ -246,7 +247,7 @@ class ResNet(nn.Module):
             else:
                 down_layers.append(nn.Conv2d(self.inplanes, planes * block.expansion,
                                              kernel_size=1, stride=stride, bias=False))
-            down_layers.append(norm_layer(planes * block.expansion))
+            down_layers.append(ModuleHelper.BN(num_features=planes * block.expansion, norm_layer=norm_layer))
             downsample = nn.Sequential(*down_layers)
 
         layers = []

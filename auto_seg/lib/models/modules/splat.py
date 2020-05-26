@@ -5,6 +5,7 @@ from torch import nn
 import torch.nn.functional as F
 from torch.nn import Conv2d, Module, Linear, BatchNorm2d, ReLU
 from torch.nn.modules.utils import _pair
+from models.tools.bn_helper import ModuleHelper
 
 __all__ = ['SplAtConv2d']
 
@@ -34,11 +35,11 @@ class SplAtConv2d(Module):
                            groups=groups*radix, bias=bias, **kwargs)
         self.use_bn = norm_layer is not None
         if self.use_bn:
-            self.bn0 = norm_layer(channels*radix)
+            self.bn0 = ModuleHelper.BN(num_features=channels*radix, norm_layer=norm_layer)
         self.relu = ReLU(inplace=True)
         self.fc1 = Conv2d(channels, inter_channels, 1, groups=self.cardinality)
         if self.use_bn:
-            self.bn1 = norm_layer(inter_channels)
+            self.bn1 = ModuleHelper.BN(num_features=inter_channels, norm_layer=norm_layer)
         self.fc2 = Conv2d(inter_channels, channels*radix, 1, groups=self.cardinality)
         # if dropblock_prob > 0.0:
         #     self.dropblock = DropBlock2D(dropblock_prob, 3)

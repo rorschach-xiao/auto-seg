@@ -4,6 +4,7 @@ import torch
 from torch.nn import functional as F
 from torch.autograd import Variable
 from models.modules.sp_block import SPBlock
+from models.tools.bn_helper import ModuleHelper
 import math
 import torch.utils.model_zoo as model_zoo
 import torch.nn as nn
@@ -29,11 +30,11 @@ class BasicBlock(nn.Module):
         super(BasicBlock, self).__init__()
         self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=3, stride=stride,
                                padding=dilation, dilation=dilation, bias=False)
-        self.bn1 = norm_layer(planes)
+        self.bn1 = ModuleHelper.BN(num_features=planes,norm_layer=norm_layer)
         self.relu = nn.ReLU(inplace=True)
         self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=1,
                                padding=previous_dilation, dilation=previous_dilation, bias=False)
-        self.bn2 = norm_layer(planes)
+        self.bn2 = ModuleHelper.BN(num_features=planes,norm_layer=norm_layer)
         self.downsample = downsample
         self.stride = stride
 
@@ -64,14 +65,14 @@ class Bottleneck(nn.Module):
                  downsample=None, previous_dilation=1, norm_layer=None,spm_on=False):
         super(Bottleneck, self).__init__()
         self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=1, bias=False)
-        self.bn1 = norm_layer(planes)
+        self.bn1 = ModuleHelper.BN(num_features=planes,norm_layer=norm_layer)
         self.conv2 = nn.Conv2d(
             planes, planes, kernel_size=3, stride=stride,
             padding=dilation, dilation=dilation, bias=False)
-        self.bn2 = norm_layer(planes)
+        self.bn2 = ModuleHelper.BN(num_features=planes,norm_layer=norm_layer)
         self.conv3 = nn.Conv2d(
             planes, planes * 4, kernel_size=1, bias=False)
-        self.bn3 = norm_layer(planes * 4)
+        self.bn3 = ModuleHelper.BN(num_features=planes*4,norm_layer=norm_layer)
         self.relu = nn.ReLU(inplace=True)
         self.downsample = downsample
         self.dilation = dilation
@@ -146,18 +147,18 @@ class ResNet(nn.Module):
             self.inplanes = 64
             self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3,
                                    bias=False)
-            self.bn1 = norm_layer(64)
+            self.bn1 = ModuleHelper.BN(num_features=self.inplanes,norm_layer=norm_layer)
         else:
             self.inplanes = 128
             self.conv1 = nn.Sequential(nn.Conv2d(3,64,kernel_size=3,stride=2,padding=1,bias=False),
-                                       norm_layer(64),
+                                       ModuleHelper.BN(num_features=64, norm_layer=norm_layer),
                                        nn.ReLU(inplace=True),
                                        nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1, bias=False),
-                                       norm_layer(64),
+                                       ModuleHelper.BN(num_features=64, norm_layer=norm_layer),
                                        nn.ReLU(inplace=True),
                                        nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1, bias=False),
                                        )
-            self.bn1 = norm_layer(128)
+            self.bn1 = ModuleHelper.BN(num_features=self.inplanes,norm_layer=norm_layer)
             #self.conv2 = nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1, bias=False)
             #self.bn2 = norm_layer(64)
             #self.conv3 = nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1, bias=False)
@@ -200,7 +201,7 @@ class ResNet(nn.Module):
             downsample = nn.Sequential(
                 nn.Conv2d(self.inplanes, planes * block.expansion,
                           kernel_size=1, stride=stride, bias=False),
-                norm_layer(planes * block.expansion),
+                ModuleHelper.BN(num_features=planes * block.expansion, norm_layer=norm_layer)
             )
         spm_on = False
         if planes == 512:

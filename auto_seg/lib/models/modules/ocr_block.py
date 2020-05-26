@@ -6,22 +6,13 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from models.tools.bn_helper import BatchNorm2d, BatchNorm2d_class, relu_inplace
+from models.tools.bn_helper import BatchNorm2d, BatchNorm2d_class, relu_inplace,ModuleHelper
 from torch.autograd import Variable
 
 logger = logging.getLogger(__name__)
 ALIGN_CORNERS = True
 
 __all__ = ['SpatialGather_Module','SpatialOCR_Module','SpatialOCR_ASP_Module','OCRHead','ASP_OCRHead']
-
-class ModuleHelper:
-
-    @staticmethod
-    def BNReLU(num_features, norm_layer=BatchNorm2d, **kwargs):
-        return nn.Sequential(
-            norm_layer(num_features),
-            nn.ReLU()
-        )
 
 
 class SpatialGather_Module(nn.Module):
