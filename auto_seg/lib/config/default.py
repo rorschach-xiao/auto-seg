@@ -91,6 +91,7 @@ _C.TRAIN.BASE_SIZE = 2048
 _C.TRAIN.DOWNSAMPLERATE = 1
 _C.TRAIN.FLIP = True
 _C.TRAIN.MULTI_SCALE = True
+_C.TRAIN.BN_TYPE = 'BN'
 
 _C.TRAIN.TRANS_LIST = ['random_scale',
                        'random_rotate',

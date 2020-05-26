@@ -6,7 +6,7 @@ from torch.nn.functional import upsample,normalize
 
 import logging
 
-from ..tools.bn_helper import BatchNorm2d, BatchNorm2d_class, relu_inplace
+from ..tools.bn_helper import BatchNorm2d, BatchNorm2d_class, relu_inplace,GroupNorm2d
 from .hrnet import hrnet64,hrnet48,hrnet32,hrnet18
 from .resnest import resnest50,resnest101,resnest200
 from .resnet import resnet50,resnet101,resnet152
@@ -46,7 +46,12 @@ class BaseNet(nn.Module):
         self.dilated = config.MODEL.DILATION
         self.multi_grid = config.MODEL.MULTI_GRID
         self.multi_dilation = [4, 8, 16]
-        self.norm_layer = BatchNorm2d
+        if config.TRAIN.BN_TYPE =="BN":
+            self.norm_layer = BatchNorm2d
+        elif config.TRAIN.BN_TYPE == "GN":
+            self.norm_layer = GroupNorm2d
+        else:
+            raise ValueError("only support sync-bn and gn")
 
         self.model_path = config.MODEL.PRETRAINED
         self.ispretrained = (config.MODEL.PRETRAINED != "")

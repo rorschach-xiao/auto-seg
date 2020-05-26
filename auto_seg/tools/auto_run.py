@@ -42,7 +42,7 @@ def train_main_worker(local_rank,
                       dilation = True,
                       ignore_label = 255,
                       atrous_rate = [12,24,36],
-                      gpus = [0,1],
+                      gpus = [0,1,2,3],
                       optimizer = 'adam',
                       **kwargs):
     # 更新config
@@ -171,7 +171,7 @@ def train_main_worker(local_rank,
                             )
     if local_rank<=0:
         queue.put(AutoTrainer.final_output_dir)
-def train(data_root,record_root,cuda_visible_devices='0,1'):
+def train(data_root,record_root,cuda_visible_devices='0,1,2,3'):
     os.environ['CUDA_VISIBLE_DEVICES'] = cuda_visible_devices
 
     train_dataset = eval('datasets.custom')(
@@ -191,10 +191,10 @@ def train(data_root,record_root,cuda_visible_devices='0,1'):
     # 确定网络及backbone
     backbone,net,pretrained_path = AutoTrainer.Find_Network(num_class)
 
-    world_size = 2
+    world_size = 4
     ctx = mp.get_context('spawn')
     queue = ctx.Queue()
-    mp.spawn(train_main_worker,nprocs=2,args=(world_size,queue,data_root,record_root,
+    mp.spawn(train_main_worker,nprocs=4,args=(world_size,queue,data_root,record_root,
                                               num_class,crop_size,epoch,aug_type,backbone,net,pretrained_path,))
     return queue.get(block = False)
 
@@ -380,6 +380,7 @@ class InferenceJob(BaseDataset):
         return pred
 
     def _run_video(self,video_path):
+        video_name = os.path.basename(video_path)
         frames_dir = os.path.join(*(os.path.split(video_path)[:-1]),"frames_dir")
         frames_out_dir = os.path.join(*(os.path.split(video_path)[:-1]),"frames_out_dir")
         if not os.path.exists(frames_out_dir):
@@ -415,7 +416,7 @@ class InferenceJob(BaseDataset):
                 pred = np.asarray(np.argmax(pred.cpu(), axis=1), dtype=np.uint8)
             pred = pred.squeeze()
             cv2.imwrite(os.path.join(frames_out_dir,frame_name+".png"),pred)
-        pred_video_path = InferenceJob.frame2video(frames_out_dir,"out_seg_video.avi",
+        pred_video_path = InferenceJob.frame2video(frames_out_dir,video_name,"out_seg_video.avi",
                                                    _fps,1,len(frames_list),(_width,_height),_fourcc)
         return pred_video_path
 
