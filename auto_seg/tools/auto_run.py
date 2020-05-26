@@ -36,13 +36,13 @@ def train_main_worker(local_rank,
                       backbone = "hrnet18",
                       model_name = "seg_hrnet",
                       pretrained_path = 'pretrained_models/hrnetv2_w18_imagenet_pretrained.pth',
+                      gpus=[0, 1],
                       batch_size_per_gpu = 4,
                       init_lr = 1e-3,
                       random_seed = 304,
                       dilation = True,
                       ignore_label = 255,
                       atrous_rate = [12,24,36],
-                      gpus = [0,1,2,3],
                       optimizer = 'adam',
                       **kwargs):
     # 更新config
@@ -191,11 +191,14 @@ def train(data_root,record_root,cuda_visible_devices='0,1,2,3'):
     # 确定网络及backbone
     backbone,net,pretrained_path = AutoTrainer.Find_Network(num_class)
 
-    world_size = 4
+    gpu_num = len(cuda_visible_devices.split(','))
+    world_size = gpu_num if gpu_num > 0  else 1
     ctx = mp.get_context('spawn')
     queue = ctx.Queue()
-    mp.spawn(train_main_worker,nprocs=4,args=(world_size,queue,data_root,record_root,
-                                              num_class,crop_size,epoch,aug_type,backbone,net,pretrained_path,))
+    gpus = list(range(0, gpu_num))
+    mp.spawn(train_main_worker,nprocs = world_size,args=(world_size,queue,data_root,record_root,
+                                              num_class,crop_size,epoch,aug_type,backbone,net,
+                                              pretrained_path, gpus))
     return queue.get(block = False)
 
 
