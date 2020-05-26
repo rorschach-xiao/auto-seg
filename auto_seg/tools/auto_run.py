@@ -37,7 +37,7 @@ def train_main_worker(local_rank,
                       model_name = "seg_hrnet",
                       pretrained_path = 'pretrained_models/hrnetv2_w18_imagenet_pretrained.pth',
                       gpus=[0, 1],
-                      batch_size_per_gpu = 4,
+                      batch_size_per_gpu = 8,
                       init_lr = 1e-3,
                       random_seed = 304,
                       dilation = True,
@@ -60,7 +60,7 @@ def train_main_worker(local_rank,
     config.MODEL.PRETRAINED = pretrained_path
     config.MODEL.DILATION = dilation
     config.MODEL.ATROUS_RATE = atrous_rate
-
+    config.TRAIN.BATCH_SIZE_PER_GPU = batch_size_per_gpu
     config.TRAIN.SHUFFLE = True
     config.TRAIN.IMAGE_SIZE = list(crop_size)
     print(crop_size)
@@ -144,20 +144,28 @@ def train_main_worker(local_rank,
     os.environ['MASTER_ADDR'] = '127.0.0.1'
     os.environ['MASTER_PORT'] = str(port)
 
-
+    # DDP初始化
+    device = torch.device('cuda:{}'.format(local_rank))
+    print(device)
+    torch.cuda.set_device(device)
+    dist.init_process_group(
+        backend="nccl", init_method="env://", rank=local_rank, world_size=world_size
+    )
     # 数据准备
     batch_size = batch_size_per_gpu * len(gpus)
+
     AutoTrainer.Build_Dataset(
-        cfg=config, batch_size=batch_size
+        cfg=config, batch_size=batch_size_per_gpu
     )
 
     # 损失函数
     AutoTrainer.Build_Loss(cfg=config)
 
-    # 初始化DDP 并 创建模型
-    AutoTrainer.DDP_Init(cfg=config,local_rank=local_rank,world_size=world_size,
-                                 model_name=config.MODEL.NAME)
+    # 创建模型
+    AutoTrainer.Build_Model(cfg=config, local_rank=local_rank, device=device,
+                         model_name=config.MODEL.NAME)
     AutoTrainer.logger.info(AutoTrainer.model)
+    
     # 优化器定义
     AutoTrainer.Build_Optimizer(cfg=config)
 
@@ -180,6 +188,7 @@ def train(data_root,record_root,cuda_visible_devices='0,1,2,3'):
         num_samples=None,
         transform=None)
 
+
     trainloader = torch.utils.data.DataLoader(train_dataset,batch_size=1)
 
     # 确定 crop_size , 类别数量以及增强策略
@@ -196,6 +205,7 @@ def train(data_root,record_root,cuda_visible_devices='0,1,2,3'):
     ctx = mp.get_context('spawn')
     queue = ctx.Queue()
     gpus = list(range(0, gpu_num))
+
     mp.spawn(train_main_worker,nprocs = world_size,args=(world_size,queue,data_root,record_root,
                                               num_class,crop_size,epoch,aug_type,backbone,net,
                                               pretrained_path, gpus))

@@ -39,7 +39,7 @@ _C.MODEL.ALIGN_CORNERS = True
 _C.MODEL.NUM_OUTPUTS = 1
 _C.MODEL.EXTRA = CN(new_allowed=True)
 _C.MODEL.SV = False
-
+_C.MODEL.BN_TYPE = 'BN'
 _C.MODEL.DEEPBASE = False
 _C.MODEL.DILATION = True
 _C.MODEL.BACKBONE = "resnet101"
@@ -91,7 +91,7 @@ _C.TRAIN.BASE_SIZE = 2048
 _C.TRAIN.DOWNSAMPLERATE = 1
 _C.TRAIN.FLIP = True
 _C.TRAIN.MULTI_SCALE = True
-_C.TRAIN.BN_TYPE = 'BN'
+
 
 _C.TRAIN.TRANS_LIST = ['random_scale',
                        'random_rotate',

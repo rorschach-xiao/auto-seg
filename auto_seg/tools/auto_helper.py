@@ -82,6 +82,7 @@ class AutoTrainer():
 
     @staticmethod
     def Build_Dataset(cfg,batch_size,**kwargs):
+
         train_transform_list = get_train_transform(config)
         train_transform = Compose(train_transform_list)
 
@@ -202,12 +203,8 @@ class AutoTrainer():
         AutoTrainer.optimizer=optimizer
 
     @staticmethod
-    def DDP_Init(cfg,local_rank,world_size,model_name):
-        device = torch.device('cuda:{}'.format(local_rank))
-        torch.cuda.set_device(device)
-        dist.init_process_group(
-            backend="nccl", init_method="env://", rank=local_rank, world_size=world_size
-        )
+    def Build_Model(cfg,device,local_rank,model_name):
+
         model = eval('models.nets.' + model_name +
                      '.get_seg_model')(cfg)
         model = FullModel(model, AutoTrainer.criterion)

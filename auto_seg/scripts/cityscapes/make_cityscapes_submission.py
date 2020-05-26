@@ -41,7 +41,7 @@ def main():
     args = argparser()
     result_path = args.pred_dir
     result_list = os.listdir(result_path)
-    os.makedir(args.submit_dir, exist_ok=True)
+    os.makedirs(args.submit_dir, exist_ok=True)
 
     for label in tqdm(result_list):
         label_img = cv2.imread(os.path.join(result_path,label),cv2.IMREAD_GRAYSCALE)
