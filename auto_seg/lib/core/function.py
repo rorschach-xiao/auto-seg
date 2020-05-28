@@ -54,7 +54,11 @@ def train(config, epoch, num_epoch, epoch_iters, base_lr,
         images = images.cuda()
         labels = labels.long().cuda()
 
+
+        start = time.time()
         losses, _ = model(images, labels)
+        step_forward_time = time.time()-start
+
         loss = losses.mean()
 
         if dist.is_distributed():
@@ -63,8 +67,14 @@ def train(config, epoch, num_epoch, epoch_iters, base_lr,
             reduced_loss = loss
 
         model.zero_grad()
+
+        start = time.time()
         loss.backward()
+        step_backward_time = time.time()-start
+
+        start = time.time()
         optimizer.step()
+        step_optimizer_time = time.time()-start
 
         # measure elapsed time
         batch_time.update(time.time() - tic)
@@ -78,20 +88,26 @@ def train(config, epoch, num_epoch, epoch_iters, base_lr,
                                   num_iters,
                                   i_iter+cur_iters)
 
+
+
         if i_iter % config.PRINT_FREQ == 0 and dist.get_rank() == 0:
             msg = 'Epoch: [{}/{}] Iter:[{}/{}], Time: {:.2f}, ' \
                   'lr: {}, Loss: {:.6f}' .format(
                       epoch, num_epoch, i_iter, epoch_iters,
                       batch_time.average(), [x['lr'] for x in optimizer.param_groups], ave_loss.average())
             logging.info(msg)
+            logging.info("step_forward_time:{} , step_backward_time:{} , step_optimizer_time:{} , batch_size:{}"
+                         .format(step_forward_time, step_backward_time, step_optimizer_time, images.size()[0]))
 
     writer.add_scalar('train_loss', ave_loss.average(), global_steps)
     writer_dict['train_global_steps'] = global_steps + 1
 
-def validate(config, testloader, model, writer_dict):
+def validate(config, testloader, model, writer_dict,per_img=False):
     model.eval()
     ave_loss = AverageMeter()
     nums = config.MODEL.NUM_OUTPUTS
+    ious_per_img = [[] for i in range(nums)]
+    dices_per_img = [[] for i in range(nums)]
     if config.DATASET.NUM_CLASSES==1:
         confusion_matrix = np.zeros((2,2,nums))
     else:
@@ -122,6 +138,13 @@ def validate(config, testloader, model, writer_dict):
                     config.TRAIN.IGNORE_LABEL
                 )
 
+                if per_img and config.DATASET.NUM_CLASSES==1:
+                    _pred = x[:, 0, :, :] > 0
+                    iou_batch, dice_batch,_ = iou_dice_binary(_pred, label)
+                    ious_per_img[i].append(iou_batch)
+                    dices_per_img[i].append(dice_batch)
+
+
             if idx % 10 == 0:
                 print(idx)
 
@@ -148,7 +171,11 @@ def validate(config, testloader, model, writer_dict):
         IoU_arrays.append(IoU_array)
         if config.DATASET.NUM_CLASSES==1:
             mean_dice = 2*tp[1]/(pos[1]+res[1])
-            logging.info('dice: %.4f' % (mean_dice))
+            if per_img:
+                mean_iou_per_img = np.mean(ious_per_img[i])
+                mean_dice_per_img = np.mean(dices_per_img[i])
+                logging.info('dice:{}, dice_per_img:{}, iou_per_img:{}'
+                             .format(mean_dice,mean_dice_per_img,mean_iou_per_img))
 
         if dist.get_rank() <= 0:
             logging.info('{} {} {}'.format(i, IoU_array, mean_IoU))
@@ -162,8 +189,10 @@ def validate(config, testloader, model, writer_dict):
 
 
 def testval(config, test_dataset, testloader, model,
-            sv_dir='', sv_pred=True):
+            sv_dir='', sv_pred=True, per_img = False):
     model.eval()
+    ious_per_img = []
+    dices_per_img = []
     if config.DATASET.NUM_CLASSES==1:
         confusion_matrix = np.zeros((2, 2))
     else:
@@ -196,7 +225,11 @@ def testval(config, test_dataset, testloader, model,
                 size,
                 config.DATASET.NUM_CLASSES,
                 config.TRAIN.IGNORE_LABEL)
-
+            if per_img and config.DATASET.NUM_CLASSES==1:
+                _pred = pred[:,0,:,:]>0
+                iou_batch, dice_batch,_ = iou_dice_binary(_pred, label)
+                ious_per_img.append(iou_batch)
+                dices_per_img.append(dice_batch)
 
             if sv_pred:
                 sv_path = os.path.join(sv_dir, config.TEST.TESTVAL_SAVE_DIR)
@@ -206,7 +239,6 @@ def testval(config, test_dataset, testloader, model,
 
             if index % 100 == 0:
                 logging.info('processing: %d images' % index)
-
                 pos = confusion_matrix.sum(1)
                 res = confusion_matrix.sum(0)
                 tp = np.diag(confusion_matrix)
@@ -215,6 +247,11 @@ def testval(config, test_dataset, testloader, model,
                 if config.DATASET.NUM_CLASSES==1:
                     mean_dice = 2*tp[1]/(pos[1]+res[1])
                     logging.info('dice: %.4f' % (mean_dice))
+                    if per_img:
+                        mean_dice_per_img = np.mean(dices_per_img)
+                        mean_iou_per_img = np.mean(ious_per_img)
+                        logging.info('dice_per_img:{}, iou_per_img:{}'
+                                     .format(mean_dice_per_img,mean_iou_per_img))
                 logging.info('mIoU: %.4f' % (mean_IoU))
 
     pos = confusion_matrix.sum(1)
@@ -227,6 +264,11 @@ def testval(config, test_dataset, testloader, model,
     if config.DATASET.NUM_CLASSES==1:
         mean_dice = 2*tp[1]/(pos[1]+res[1])
         logging.info('final_dice: %.4f' % (mean_dice))
+        if per_img:
+            mean_dice_per_img = np.mean(dices_per_img)
+            mean_iou_per_img = np.mean(ious_per_img)
+            logging.info('final_dice_per_img:{}, final_iou_per_img:{}'
+                         .format(mean_dice_per_img, mean_iou_per_img))
 
     return mean_IoU, IoU_array, pixel_acc, mean_acc
 

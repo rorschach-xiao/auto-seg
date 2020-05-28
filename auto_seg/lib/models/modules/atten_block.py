@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-import torch.functional as F
+import torch.nn.functional as F
 
 __all__ = ['PAM_Module', 'CAM_Module']
 
@@ -14,7 +14,7 @@ class PAM_Module(nn.Module):
         self.value_conv = nn.Conv2d(in_channels=in_dim, out_channels=in_dim, kernel_size=1)
         self.gamma = nn.Parameter(torch.zeros(1))
 
-        self.softmax = F.Softmax(dim=-1)
+        self.softmax = nn.Softmax(dim=-1)
     def forward(self, x):
         """
             inputs :
@@ -44,7 +44,8 @@ class CAM_Module(nn.Module):
         self.key_conv = nn.Conv2d(in_channels=in_dim,out_channels=in_dim//8,kernel_size=1)
         self.value_conv = nn.Conv2d(in_channels=in_dim,out_channels=in_dim,kernel_size=1)
         self.beta = nn.Parameter(torch.zeros(1))
-        self.softmax = F.Softmax(dim=-1)
+        self.softmax = nn.Softmax(dim=-1)
+
 
     def forward(self,x):
         """

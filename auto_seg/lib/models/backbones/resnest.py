@@ -159,6 +159,7 @@ class ResNet(nn.Module):
                  avd=False, avd_first=False,
                  final_drop=0.0, dropblock_prob=0,
                  last_gamma=False, norm_layer=nn.BatchNorm2d,**kwargs):
+
         self.cardinality = groups
         self.bottleneck_width = bottleneck_width
         # ResNet-D params
@@ -171,6 +172,7 @@ class ResNet(nn.Module):
         self.avd_first = avd_first
 
         super(ResNet, self).__init__()
+
         self.rectified_conv = rectified_conv
         self.rectify_avg = rectify_avg
         if rectified_conv:
@@ -192,7 +194,7 @@ class ResNet(nn.Module):
         else:
             self.conv1 = conv_layer(3, 64, kernel_size=7, stride=2, padding=3,
                                    bias=False, **conv_kwargs)
-        self.bn1 = ModuleHelper.BN(num_features=self.inplanes, norm_layer=norm_layer),
+        self.bn1 = ModuleHelper.BN(num_features=self.inplanes, norm_layer=norm_layer)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         self.layer1 = self._make_layer(block, 64, layers[0], norm_layer=norm_layer, is_first=False)
@@ -320,6 +322,7 @@ def resnest101(pretrained=False, model_path='./pretrained_models/resnest101-2240
                    radix=2, groups=1, bottleneck_width=64,
                    deep_stem=True, stem_width=64, avg_down=True,
                    avd=True, avd_first=False, **kwargs)
+    print(model)
     if pretrained:
         model.load_state_dict(torch.load(model_path),strict=True)
     return model

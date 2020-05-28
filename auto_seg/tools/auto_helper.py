@@ -222,11 +222,23 @@ class AutoTrainer():
         avg_h = 0.0
         avg_w = 0.0
         nclass = -1
+        total_label_count = np.array([])
         print("searching hyper parameters...")
         for idx, batch in enumerate(dataloader):
             image, label, _, _ = batch
             _,ori_h,ori_w,_ = image.shape
             label_uni = np.unique(label)
+            label_count = np.bincount(label.reshape(-1))
+
+            # 统计每种label的数量
+            if label_count.size > total_label_count.size:
+                total_label_count = np.r_[total_label_count,
+                                          [0 for i in range(label_count.size-total_label_count.size)]].astype(np.int32)
+            else :
+                label_count = np.r_[label_count,
+                                    [0 for i in range(total_label_count.size-label_count.size)]].astype(np.int32)
+            total_label_count += label_count
+
             nclass = max(nclass,label_uni[-1] if label_uni[-1]!=ignore_label else label_uni[-2]) # update num_class
             avg_h = (avg_h*idx+ori_h)/(idx+1) # update avg_h,avg_w
             avg_w = (avg_w*idx+ori_w)/(idx+1)
@@ -238,18 +250,19 @@ class AutoTrainer():
             aug_type = "resize"
         AutoTrainer.crop_size=crop_size
         print("searching done!")
-        if nclass==1:
-            return crop_size,nclass,aug_type
+        if nclass == 1:
+            return crop_size,nclass,aug_type,total_label_count
         else:
             aug_type = "crop"
-            return crop_size,nclass+1,aug_type
+            return crop_size,nclass+1,aug_type,total_label_count
+
 
     @staticmethod
     def Find_Epoch(num_class,dataset):
         if num_class == 1:
             if len(dataset) < 1000:
                 epoch = 20
-            elif len(dataset) < 5000:
+            elif len(dataset) < 4000:
                 epoch = 40
             else:
                 epoch = 80
@@ -264,7 +277,7 @@ class AutoTrainer():
     def Find_Network(num_class):
         if num_class==1:
             backbone = 'hrnet18'
-            net = 'seg_hrnet'
+            net = 'seg_hrnet_ocr'
             pretrained_model_path = 'pretrained_models/hrnetv2_w18_imagenet_pretrained.pth'
         else:
             backbone = 'resnest50'
@@ -282,7 +295,7 @@ class AutoTrainer():
                   epoch_iters, lr, num_iters,
                   AutoTrainer.trainloader, AutoTrainer.optimizer, AutoTrainer.model, writer_dict)
             valid_loss, mean_IoU, IoU_array = validate(config,
-                                                       AutoTrainer.valloader, AutoTrainer.model, writer_dict)
+                                                       AutoTrainer.valloader, AutoTrainer.model, writer_dict,per_img=True)
 
 
             if local_rank <= 0:
@@ -371,6 +384,7 @@ class AutoTestor():
             module.BatchNorm2d_class = module.BatchNorm2d = torch.nn.BatchNorm2d
         model = eval('models.nets.' + cfg.MODEL.NAME +
                      '.get_seg_model')(cfg)
+        print(model)
         gpus = list(cfg.GPUS)
         model = nn.DataParallel(model, device_ids=gpus).cuda()
 
@@ -380,6 +394,8 @@ class AutoTestor():
 
         pretrained_dict = torch.load(model_state_file)
         model_dict = model.state_dict()
+        print(set('module.' + k[6:] for k in pretrained_dict if 'criterion' not in k))
+        print(set(model_dict))
         assert set('module.' + k[6:] for k in pretrained_dict if 'criterion' not in k) == set(model_dict)
         pretrained_dict = {'module.' + k[6:]: v for k, v in pretrained_dict.items()
                            if 'module.' + k[6:] in model_dict.keys()}
@@ -398,7 +414,8 @@ class AutoTestor():
                                                            AutoTestor.test_dataset,
                                                            AutoTestor.testloader,
                                                            AutoTestor.model,
-                                                           sv_dir=AutoTestor.final_output_dir)
+                                                           sv_dir=AutoTestor.final_output_dir,
+                                                           per_img=True)
 
         msg = 'MeanIU: {: 4.4f}, Pixel_Acc: {: 4.4f}, \
                     Mean_Acc: {: 4.4f}, Class IoU: '.format(mean_IoU,

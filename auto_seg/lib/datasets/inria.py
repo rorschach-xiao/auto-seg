@@ -24,7 +24,7 @@ class InriaDataset(BaseDataset):
                                         'Inria/', item["img"]), cv2.IMREAD_COLOR)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         size = image.shape
-        if 'test' in self.list_path:
+        if 'test' in self.list_path and 'val' not in self.list_path:
             if self.transform!=None:
                 image = self.transform(image)
             return image, np.array(size), name

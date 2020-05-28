@@ -65,7 +65,7 @@ def get_model_summary(model, *input_tensors, item_length=26, verbose=False):
 
             if isinstance(input[0], list):
                 input = input[0]
-            if isinstance(output, list):
+            if isinstance(output, list) or isinstance(output,tuple):
                 output = output[0]
 
             summary.append(

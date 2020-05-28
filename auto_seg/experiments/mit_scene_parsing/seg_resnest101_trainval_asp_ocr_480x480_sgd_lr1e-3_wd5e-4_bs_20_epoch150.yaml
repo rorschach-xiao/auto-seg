@@ -1,0 +1,65 @@
+CUDNN:
+  BENCHMARK: true
+  DETERMINISTIC: false
+  ENABLED: true
+GPUS: (0,1,2,3)
+OUTPUT_DIR: 'output'
+LOG_DIR: 'log'
+WORKERS: 4
+PRINT_FREQ: 100
+
+DATASET:
+  DATASET: mit_scene_parsing
+  ROOT: 'data/'
+  TEST_SET: 'list/mit_scene_parsing/val.txt'
+  TRAIN_SET: 'list/mit_scene_parsing/train.txt'
+  EXTRA_TRAIN_SET: 'list/mit_scene_parsing/trainval.txt'
+  NUM_CLASSES: 151
+MODEL:
+  NAME: seg_asp_ocr
+  NUM_OUTPUTS: 2
+  BACKBONE: "resnest101"
+  DILATION: True
+  PRETRAINED: "./pretrained_models/resnest101-22405ba7.pth"
+  ATROUS_RATE: [12,24,36]
+LOSS:
+  USE_OHEM: true
+  OHEMTHRES: 0.9
+  OHEMKEEP: 131072
+  BALANCE_WEIGHTS: [0.4,1]
+TRAIN:
+  IMAGE_SIZE:
+  - 480
+  - 480
+  BASE_SIZE: 480
+  BATCH_SIZE_PER_GPU: 5
+  SHUFFLE: true
+  BEGIN_EPOCH: 0
+  END_EPOCH: 120
+  EXTRA_EPOCH: 60
+  RESUME: true
+  OPTIMIZER: sgd
+  LR: 0.001
+  EXTRA_LR: 0.0001
+  WD: 0.0005
+  MOMENTUM: 0.9
+  NESTEROV: false
+  TRANS_LIST: ['random_scale',
+               'random_rotate',
+               'random_blur',
+               'random_hflip',
+               'crop',
+               'totensor',
+               'normalize']
+  IGNORE_LABEL: 255
+  NONBACKBONE_KEYWORDS: ['asp_ocr','aux_layer']
+
+TEST:
+  IMAGE_SIZE:
+  - 480
+  - 480
+  BASE_SIZE: 480
+  BATCH_SIZE_PER_GPU: 2
+  FLIP_TEST: true
+  MULTI_SCALE: true
+  OUTPUT_INDEX: -1

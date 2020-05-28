@@ -30,6 +30,7 @@ def train_main_worker(local_rank,
                       data_root,
                       record_root,
                       num_class,
+                      total_lable_count,
                       crop_size = (512,512),
                       epoch = 40,
                       aug_type = "resize",
@@ -51,9 +52,9 @@ def train_main_worker(local_rank,
     config.DATASET.DATASET = 'custom'
     config.MODEL.NAME = model_name
     config.MODEL.BACKBONE = backbone
-    if config.MODEL.NAME=='seg_hrnet':
-        config.MODEL.NUM_OUTPUTS = 1
-        config.TRAIN.NONBACKBONE_KEYWORDS=['last_layer']
+    if config.MODEL.NAME=='seg_hrnet_ocr':
+        config.MODEL.NUM_OUTPUTS = 2
+        config.TRAIN.NONBACKBONE_KEYWORDS = ['ocr','aux_layer']
     else:
         config.MODEL.NUM_OUTPUTS = 2
         config.TRAIN.NONBACKBONE_KEYWORDS = ['asp_ocr','aux_layer']
@@ -98,13 +99,24 @@ def train_main_worker(local_rank,
         config.TRAIN.RANDOM_ANGLE_DEGREE = 10
         config.TRAIN.RANDOM_SCALE_MIN = 0.5
         config.TRAIN.RANDOM_SCALE_MAX = 2.0
-
+    is_unbalance = False
     if config.DATASET.NUM_CLASSES>2:
         config.LOSS.TYPE = "CE"
         config.LOSS.USE_OHEM = True
     else:
         assert config.DATASET.NUM_CLASSES==1
-        config.LOSS.TYPE = "BCE"
+        assert len(total_lable_count)==2
+        if total_lable_count[1]>0.1*total_lable_count[0]:
+            config.LOSS.TYPE = "BCE"
+        else:  # 正负样本不均衡情况
+            config.LOSS.TYPE = "COMBO"
+            is_unbalance = True
+            config.MODEL.BACKBONE = "hrnet32"
+            config.MODEL.PRETRAINED = "pretrained_models/hrnetv2_w32_imagenet_pretrained.pth"
+            config.TRAIN.LR = 0.007
+            config.TRAIN.NONBACKBONE_KEYWORDS = []
+            config.TRAIN.BATCH_SIZE_PER_GPU = batch_size_per_gpu = 4
+            config.TRAIN.END_EPOCH = 80
 
     if  config.MODEL.NUM_OUTPUTS == 2:
         config.LOSS.BALANCE_WEIGHTS = [0.4, 1]
@@ -157,6 +169,8 @@ def train_main_worker(local_rank,
     AutoTrainer.Build_Dataset(
         cfg=config, batch_size=batch_size_per_gpu
     )
+    if is_unbalance:
+        AutoTrainer.train_dataset.class_weights = torch.FloatTensor([0.1,0.9])
 
     # 损失函数
     AutoTrainer.Build_Loss(cfg=config)
@@ -165,7 +179,7 @@ def train_main_worker(local_rank,
     AutoTrainer.Build_Model(cfg=config, local_rank=local_rank, device=device,
                          model_name=config.MODEL.NAME)
     AutoTrainer.logger.info(AutoTrainer.model)
-    
+
     # 优化器定义
     AutoTrainer.Build_Optimizer(cfg=config)
 
@@ -192,7 +206,9 @@ def train(data_root,record_root,cuda_visible_devices='0,1,2,3'):
     trainloader = torch.utils.data.DataLoader(train_dataset,batch_size=1)
 
     # 确定 crop_size , 类别数量以及增强策略
-    crop_size,num_class,aug_type = AutoTrainer.Find_Crop_Size_And_NClass(trainloader)
+    crop_size,num_class,aug_type,total_label_count = AutoTrainer.Find_Crop_Size_And_NClass(trainloader)
+
+    print(total_label_count)
 
     # 确定训练epoch
     epoch = AutoTrainer.Find_Epoch(num_class=num_class,dataset=train_dataset)
@@ -207,8 +223,8 @@ def train(data_root,record_root,cuda_visible_devices='0,1,2,3'):
     gpus = list(range(0, gpu_num))
 
     mp.spawn(train_main_worker,nprocs = world_size,args=(world_size,queue,data_root,record_root,
-                                              num_class,crop_size,epoch,aug_type,backbone,net,
-                                              pretrained_path, gpus))
+                                              num_class,total_label_count,crop_size,epoch,aug_type,
+                                              backbone,net,pretrained_path, gpus))
     return queue.get(block = False)
 
 

@@ -25,7 +25,7 @@ class SIIM(BaseDataset):
         item = self.files[index]
         name = item["name"]
         image = cv2.imread(os.path.join(self.root,
-                                        'siim/trainval', item["img"]), cv2.IMREAD_COLOR)
+                                        'siim/', item["img"]), cv2.IMREAD_COLOR)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         if 'test' in self.list_path and 'val' not in self.list_path:
             size = image.shape
@@ -34,7 +34,7 @@ class SIIM(BaseDataset):
             return image, np.array(size), name
         else:
             label = cv2.imread(os.path.join(self.root,
-                                            'siim/trainval',item["label"]),cv2.IMREAD_GRAYSCALE)
+                                            'siim/',item["label"]),cv2.IMREAD_GRAYSCALE)
             size = label.shape
             if self.transform!=None:
                 image,label = self.transform(image,label)
