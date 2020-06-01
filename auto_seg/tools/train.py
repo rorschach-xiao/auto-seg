@@ -306,7 +306,7 @@ def main():
                   trainloader, optimizer, model, writer_dict)
 
         valid_loss, mean_IoU, IoU_array = validate(config,
-                                                   testloader, model, writer_dict)
+                                                   testloader, model, writer_dict,per_img=True)
 
         if args.local_rank <= 0:
             logger.info('=> saving checkpoint to {}'.format(

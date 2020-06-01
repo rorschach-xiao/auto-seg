@@ -31,6 +31,7 @@ def train_main_worker(local_rank,
                       record_root,
                       num_class,
                       total_lable_count,
+                      base_size = 1024,
                       crop_size = (512,512),
                       epoch = 40,
                       aug_type = "resize",
@@ -52,11 +53,10 @@ def train_main_worker(local_rank,
     config.DATASET.DATASET = 'custom'
     config.MODEL.NAME = model_name
     config.MODEL.BACKBONE = backbone
+    config.MODEL.NUM_OUTPUTS = 2
     if config.MODEL.NAME=='seg_hrnet_ocr':
-        config.MODEL.NUM_OUTPUTS = 2
         config.TRAIN.NONBACKBONE_KEYWORDS = ['ocr','aux_layer']
     else:
-        config.MODEL.NUM_OUTPUTS = 2
         config.TRAIN.NONBACKBONE_KEYWORDS = ['asp_ocr','aux_layer']
     config.MODEL.PRETRAINED = pretrained_path
     config.MODEL.DILATION = dilation
@@ -64,13 +64,14 @@ def train_main_worker(local_rank,
     config.TRAIN.BATCH_SIZE_PER_GPU = batch_size_per_gpu
     config.TRAIN.SHUFFLE = True
     config.TRAIN.IMAGE_SIZE = list(crop_size)
-    print(crop_size)
-    config.TRAIN.BASE_SIZE = max(config.TRAIN.IMAGE_SIZE)
+    config.TRAIN.BASE_SIZE = base_size
 
     config.TRAIN.LR = init_lr
     config.TRAIN.IGNORE_LABEL = ignore_label
     config.TRAIN.END_EPOCH = epoch
     config.TRAIN.OPTIMIZER = optimizer
+    config.TRAIN.RANDOM_SCALE_MIN = 0.5
+    config.TRAIN.RANDOM_SCALE_MAX = 1.5
 
     if aug_type == "resize":
         config.TRAIN.TRANS_LIST = ['resize',
@@ -83,8 +84,6 @@ def train_main_worker(local_rank,
                                 'totensor',
                                 'normalize']
         config.TRAIN.RANDOM_ANGLE_DEGREE = 20
-        config.TRAIN.RANDOM_SCALE_MIN = 0.5
-        config.TRAIN.RANDOM_SCALE_MAX = 1.5
     elif aug_type == "crop":
         config.TRAIN.TRANS_LIST = ['random_scale',
                                    'random_rotate',
@@ -97,26 +96,23 @@ def train_main_worker(local_rank,
                                  'totensor',
                                  'normalize']
         config.TRAIN.RANDOM_ANGLE_DEGREE = 10
-        config.TRAIN.RANDOM_SCALE_MIN = 0.5
-        config.TRAIN.RANDOM_SCALE_MAX = 2.0
-    is_unbalance = False
+
     if config.DATASET.NUM_CLASSES>2:
         config.LOSS.TYPE = "CE"
         config.LOSS.USE_OHEM = True
     else:
         assert config.DATASET.NUM_CLASSES==1
         assert len(total_lable_count)==2
-        if total_lable_count[1]>0.1*total_lable_count[0]:
-            config.LOSS.TYPE = "BCE"
-        else:  # 正负样本不均衡情况
-            config.LOSS.TYPE = "COMBO"
-            is_unbalance = True
-            config.MODEL.BACKBONE = "hrnet32"
-            config.MODEL.PRETRAINED = "pretrained_models/hrnetv2_w32_imagenet_pretrained.pth"
+        config.LOSS.TYPE = "BCE"
+        if total_lable_count[1]<0.1*total_lable_count[0]: # 二分类正负样本不均衡情况下的调整
+            config.MODEL.BACKBONE = "resnest50"
+            config.MODEL.NAME = "seg_asp_ocr"
+            config.MODEL.PRETRAINED = "pretrained_models/resnest50-528c19ca.pth"
             config.TRAIN.LR = 0.007
-            config.TRAIN.NONBACKBONE_KEYWORDS = []
             config.TRAIN.BATCH_SIZE_PER_GPU = batch_size_per_gpu = 4
+            config.TRAIN.NONBACKBONE_KEYWORDS = ['asp_ocr','aux_layer']
             config.TRAIN.END_EPOCH = 80
+            config.TRAIN.OPTIMIZER = "sgd"
 
     if  config.MODEL.NUM_OUTPUTS == 2:
         config.LOSS.BALANCE_WEIGHTS = [0.4, 1]
@@ -128,7 +124,9 @@ def train_main_worker(local_rank,
     AutoTrainer.Creat_Logger(cfg=config, phase='train')
     AutoTrainer.logger.info(config)
 
-    train_param_dict = {'crop_size': list(crop_size), 'nclass': int(num_class), 'backbone': backbone, 'net': model_name}
+    train_param_dict = {'crop_size': list(crop_size), 'nclass': int(num_class),
+                        'backbone': config.MODEL.BACKBONE, 'net': config.MODEL.NAME,
+                        'base_size': config.TRAIN.BASE_SIZE,'aug_type': aug_type}
 
     with open(os.path.join(AutoTrainer.final_output_dir, "param.json"), "w") as f:
         json.dump(train_param_dict, f)
@@ -169,8 +167,7 @@ def train_main_worker(local_rank,
     AutoTrainer.Build_Dataset(
         cfg=config, batch_size=batch_size_per_gpu
     )
-    if is_unbalance:
-        AutoTrainer.train_dataset.class_weights = torch.FloatTensor([0.1,0.9])
+
 
     # 损失函数
     AutoTrainer.Build_Loss(cfg=config)
@@ -206,7 +203,7 @@ def train(data_root,record_root,cuda_visible_devices='0,1,2,3'):
     trainloader = torch.utils.data.DataLoader(train_dataset,batch_size=1)
 
     # 确定 crop_size , 类别数量以及增强策略
-    crop_size,num_class,aug_type,total_label_count = AutoTrainer.Find_Crop_Size_And_NClass(trainloader)
+    crop_size,base_size,num_class,aug_type,total_label_count = AutoTrainer.Find_Crop_Size_And_NClass(trainloader)
 
     print(total_label_count)
 
@@ -223,7 +220,7 @@ def train(data_root,record_root,cuda_visible_devices='0,1,2,3'):
     gpus = list(range(0, gpu_num))
 
     mp.spawn(train_main_worker,nprocs = world_size,args=(world_size,queue,data_root,record_root,
-                                              num_class,total_label_count,crop_size,epoch,aug_type,
+                                              num_class,total_label_count,base_size,crop_size,epoch,aug_type,
                                               backbone,net,pretrained_path, gpus))
     return queue.get(block = False)
 
@@ -247,10 +244,15 @@ def test(data_root,output_root,cuda_visible_devices='0,1'):
     config.MODEL.BACKBONE = param_dict['backbone']
 
     config.TEST.IMAGE_SIZE = param_dict['crop_size'][::-1] #(w,h)
-    config.TEST.BASE_SIZE = max(config.TEST.IMAGE_SIZE)
+    config.TEST.BASE_SIZE = param_dict['base_size']
 
-    # TODO
-    config.TEST.SCALE_LIST = [0.5,1.0,1.5]
+    if param_dict['aug_type'] == 'crop':
+        config.TEST.SCALE_LIST = [0.5,1.0,1.5]
+    elif param_dict['aug_type'] == 'resize':
+        config.TEST.SCALE_LIST = [0.5,1.0]
+    else:
+        raise ValueError('not implement aug-type!')
+    #TODO
     config.TEST.MODEL_FILE = os.path.join(output_root,'final_state.pth')
     if config.MODEL.NAME == 'seg_hrnet':
         config.MODEL.NUM_OUTPUTS = 1

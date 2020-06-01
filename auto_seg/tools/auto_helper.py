@@ -243,18 +243,19 @@ class AutoTrainer():
             avg_h = (avg_h*idx+ori_h)/(idx+1) # update avg_h,avg_w
             avg_w = (avg_w*idx+ori_w)/(idx+1)
         if min(avg_h,avg_w)>600 or max(avg_h,avg_w)>1000:
-            crop_size = (520,520)
+            crop_size = (512,512)
             aug_type = "crop"
         else:
             crop_size = (int(avg_h),int(avg_w))
             aug_type = "resize"
         AutoTrainer.crop_size=crop_size
+        base_size = max(int(avg_h),int(avg_w))
         print("searching done!")
         if nclass == 1:
-            return crop_size,nclass,aug_type,total_label_count
+            return crop_size,base_size,nclass,aug_type,total_label_count
         else:
             aug_type = "crop"
-            return crop_size,nclass+1,aug_type,total_label_count
+            return crop_size,base_size,nclass+1,aug_type,total_label_count
 
 
     @staticmethod
@@ -359,6 +360,7 @@ class AutoTestor():
         test_transform = Compose(test_transform_list)
         test_dataset = eval('datasets.' + cfg.DATASET.DATASET)(
             root=cfg.DATASET.ROOT,
+            #TODO
             list_path='testval.txt',
             num_samples=None,
             num_classes=cfg.DATASET.NUM_CLASSES,
@@ -394,8 +396,7 @@ class AutoTestor():
 
         pretrained_dict = torch.load(model_state_file)
         model_dict = model.state_dict()
-        print(set('module.' + k[6:] for k in pretrained_dict if 'criterion' not in k))
-        print(set(model_dict))
+        print(set('module.' + k[6:] for k in pretrained_dict if 'criterion' not in k)-set(model_dict))
         assert set('module.' + k[6:] for k in pretrained_dict if 'criterion' not in k) == set(model_dict)
         pretrained_dict = {'module.' + k[6:]: v for k, v in pretrained_dict.items()
                            if 'module.' + k[6:] in model_dict.keys()}
