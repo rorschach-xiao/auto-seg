@@ -281,9 +281,9 @@ class AutoTrainer():
             net = 'seg_hrnet_ocr'
             pretrained_model_path = 'pretrained_models/hrnetv2_w18_imagenet_pretrained.pth'
         else:
-            backbone = 'resnest50'
+            backbone = 'resnest101'
             net = 'seg_asp_ocr'
-            pretrained_model_path = 'pretrained_models/resnest50-528c19ca.pth'
+            pretrained_model_path = 'pretrained_models/resnest101-22405ba7.pth'
         return backbone,net,pretrained_model_path
 
     @staticmethod
@@ -361,7 +361,7 @@ class AutoTestor():
         test_dataset = eval('datasets.' + cfg.DATASET.DATASET)(
             root=cfg.DATASET.ROOT,
             #TODO
-            list_path='testval.txt',
+            list_path='val.txt',
             num_samples=None,
             num_classes=cfg.DATASET.NUM_CLASSES,
             transform=test_transform)

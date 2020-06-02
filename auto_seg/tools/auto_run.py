@@ -100,6 +100,8 @@ def train_main_worker(local_rank,
     if config.DATASET.NUM_CLASSES>2:
         config.LOSS.TYPE = "CE"
         config.LOSS.USE_OHEM = True
+        config.TRAIN.OPTIMIZER = "sgd"
+        config.TRAIN.BATCH_SIZE_PER_GPU = batch_size_per_gpu = 4
     else:
         assert config.DATASET.NUM_CLASSES==1
         assert len(total_lable_count)==2

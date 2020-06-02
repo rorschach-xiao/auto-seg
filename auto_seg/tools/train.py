@@ -22,7 +22,8 @@ import models
 import datasets
 from config import config
 from config import update_config
-from core.criterion import CrossEntropy, OhemCrossEntropy,SoftDiceLoss,LovaszHinge,LovaszSoftmax,LovaszSigmoid,StableBCELoss,ComboLoss
+from core.criterion import CrossEntropy, OhemCrossEntropy,SoftDiceLoss,LovaszHinge,\
+    LovaszSoftmax,LovaszSigmoid,StableBCELoss,ComboLoss,RMILoss
 from core.function import train, validate
 from utils.modelsummary import get_model_summary
 from utils.utils import create_logger, FullModel
@@ -196,6 +197,8 @@ def main():
     elif config.LOSS.TYPE == "COMBO" and config.DATASET.NUM_CLASSES == 1:
         criterion = ComboLoss(ignore_label=config.TRAIN.IGNORE_LABEL
                               , channel_weight=[0.5, 1], data_weight=train_dataset.class_weights)
+    elif config.LOSS.TYPE == "RMI":
+        criterion = RMILoss()
     elif config.LOSS.TYPE == "CE":
         if config.LOSS.USE_OHEM:
             criterion = OhemCrossEntropy(ignore_label=config.TRAIN.IGNORE_LABEL,

@@ -11,10 +11,10 @@ PRINT_FREQ: 100
 DATASET:
   DATASET: lip
   ROOT: 'data/'
-  TEST_SET: 'list/LIP/val.txt'
-  TRAIN_SET: 'list/LIP/train.txt'
-  EXTRA_TRAIN_SET: 'list/LIP/trainval.txt'
-  NUM_CLASSES: 151
+  TEST_SET: 'list/lip/valList.txt'
+  TRAIN_SET: 'list/lip/trainList.txt'
+  EXTRA_TRAIN_SET: 'list/lip/trainvalList.txt'
+  NUM_CLASSES: 20
 MODEL:
   NAME: seg_asp_ocr
   NUM_OUTPUTS: 2
@@ -25,18 +25,18 @@ MODEL:
 LOSS:
   USE_OHEM: true
   OHEMTHRES: 0.9
-  OHEMKEEP: 131072
+  OHEMKEEP: 100000
   BALANCE_WEIGHTS: [0.4,1]
 TRAIN:
   IMAGE_SIZE:
-  - 480
-  - 480
-  BASE_SIZE: 480
-  BATCH_SIZE_PER_GPU: 5
+  - 473
+  - 473
+  BASE_SIZE: 473
+  BATCH_SIZE_PER_GPU: 3
   SHUFFLE: true
   BEGIN_EPOCH: 0
   END_EPOCH: 120
-  EXTRA_EPOCH: 60
+  EXTRA_EPOCH: 80
   RESUME: true
   OPTIMIZER: sgd
   LR: 0.001
@@ -47,18 +47,20 @@ TRAIN:
   TRANS_LIST: ['random_scale',
                'random_rotate',
                'random_blur',
-               'random_hflip',
                'crop',
                'totensor',
                'normalize']
+  RANDOM_ANGLE_DEGREE: 20
+  RANDOM_SCALE_MIN: 0.5
+  RANDOM_SCALE_MAX: 1.75
   IGNORE_LABEL: 255
   NONBACKBONE_KEYWORDS: ['asp_ocr','aux_layer']
 
 TEST:
   IMAGE_SIZE:
-  - 480
-  - 480
-  BASE_SIZE: 480
+  - 473
+  - 473
+  BASE_SIZE: 473
   BATCH_SIZE_PER_GPU: 2
   FLIP_TEST: true
   MULTI_SCALE: true

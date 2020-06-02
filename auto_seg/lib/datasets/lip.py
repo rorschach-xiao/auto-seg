@@ -29,7 +29,32 @@ class LIP(BaseDataset):
         image = cv2.resize(image, size, interpolation=cv2.INTER_LINEAR)
         label = cv2.resize(label, size, interpolation=cv2.INTER_NEAREST)
         return image, label
-
+    def read_files(self):
+        files = []
+        for item in self.img_list:
+            if 'train' in self.list_path and 'val' not in self.list_path:
+                image_path, label_path,_,_ = item
+                name = os.path.splitext(os.path.basename(label_path))[0]
+                sample = {
+                    "img": image_path,
+                    "label": label_path,
+                    "name": name,
+                }
+            elif 'val' in self.list_path:
+                image_path, label_path = item
+                name = os.path.splitext(os.path.basename(label_path))[0]
+                sample = {"img": image_path,
+                          "label": label_path,
+                          "name": name, }
+            elif 'test' in self.list_path:
+                image_path = item[0]
+                name = os.path.splitext(os.path.basename(image_path))[0]
+                sample = {"img": image_path,
+                          "name": name, }
+            else:
+                raise NotImplementedError('Unknown subset.')
+            files.append(sample)
+        return files
     def __getitem__(self, index):
         item = self.files[index]
         name = item["name"]
@@ -43,11 +68,11 @@ class LIP(BaseDataset):
             return image, np.array(size), name
 
         image = cv2.imread(os.path.join(
-            self.root, 'lip/TrainVal_images/', item["img"]),
+            self.root, 'LIP/TrainVal_images/', item["img"]),
             cv2.IMREAD_COLOR)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         label = cv2.imread(os.path.join(
-            self.root, 'lip/TrainVal_parsing_annotations/',
+            self.root, 'LIP/TrainVal_parsing_annotations/',
             item["label"]),
             cv2.IMREAD_GRAYSCALE)
         size = label.shape
@@ -68,7 +93,7 @@ class LIP(BaseDataset):
                     label[right_pos[0], right_pos[1]] = left_idx[i]
                     label[left_pos[0], left_pos[1]] = right_idx[i]
         if self.transform is not None:
-            image,label = self.transform(image,label)
+            image,label = self.transform(image.copy(),label.copy())
 
 
         return image, label, np.array(size), name
