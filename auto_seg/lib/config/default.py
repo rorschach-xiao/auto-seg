@@ -152,6 +152,8 @@ _C.TEST.STRIDE_RATE = 2/3
 _C.TEST.TESTVAL_SAVE_DIR = "testval_results"
 _C.TEST.TEST_SAVE_DIR = "test_results"
 _C.TEST.OUTPUT_INDEX = -1
+_C.TEST.IS_ENSEMBLE = False
+
 
 # debug
 _C.DEBUG = CN()

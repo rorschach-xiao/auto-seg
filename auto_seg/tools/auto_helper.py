@@ -388,18 +388,19 @@ class AutoTestor():
                      '.get_seg_model')(cfg)
         print(model)
         gpus = list(cfg.GPUS)
-        model = nn.DataParallel(model, device_ids=gpus).cuda()
-
+        #model = nn.DataParallel(model, device_ids=gpus).cuda()
+        model = model.to("cuda:0")
 
         model_state_file = cfg.TEST.MODEL_FILE
         AutoTestor.logger.info('=> loading model from {}'.format(model_state_file))
 
         pretrained_dict = torch.load(model_state_file)
         model_dict = model.state_dict()
-        print(set('module.' + k[6:] for k in pretrained_dict if 'criterion' not in k)-set(model_dict))
-        assert set('module.' + k[6:] for k in pretrained_dict if 'criterion' not in k) == set(model_dict)
-        pretrained_dict = {'module.' + k[6:]: v for k, v in pretrained_dict.items()
-                           if 'module.' + k[6:] in model_dict.keys()}
+        print(set(model_dict))
+        #print(set( k[6:] for k in pretrained_dict if 'criterion' not in k)-set(model_dict))
+        assert set( k[6:] for k in pretrained_dict if 'criterion' not in k) == set(model_dict)
+        pretrained_dict = { k[6:]: v for k, v in pretrained_dict.items()
+                           if  k[6:] in model_dict.keys()}
         for k, _ in pretrained_dict.items():
             AutoTestor.logger.info(
                 '=> loading {} from pretrained model'.format(k))

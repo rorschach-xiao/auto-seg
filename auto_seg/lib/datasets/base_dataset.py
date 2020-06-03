@@ -79,7 +79,10 @@ class BaseDataset(data.Dataset):
         else:
             for t, m, s in zip(image, mean, std):
                 t.sub_(m).div_(s)
-        image = image.unsqueeze(0).cuda()
+        model_dict = dict(model.named_parameters())
+        device_id = model_dict[list(model_dict.keys())[0]].device.index
+        image = image.unsqueeze(0).to('cuda:{}'.format(device_id))
+        #image = image.unsqueeze(0).cuda()
         if flip:
             image = torch.cat([image, image.flip(3)], 0)
         with torch.no_grad():
