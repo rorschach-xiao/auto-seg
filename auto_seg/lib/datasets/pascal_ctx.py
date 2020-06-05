@@ -27,11 +27,15 @@ class PASCALContext(BaseDataset):
                  std=[0.229, 0.224, 0.225],
                  transform=None):
 
-        super(PASCALContext, self).__init__(root, list_path,num_samples,num_classes, mean, std,transform)
+        #super(PASCALContext, self).__init__(root, list_path,num_samples,num_classes, mean, std,transform)
 
         self.root = os.path.join(root, 'pascal_ctx/VOCdevkit/VOC2010')
         self.split = list_path
         self.transform = transform
+        self.mean = mean
+        self.std = std
+        self.num_classes = num_classes
+        self.class_weights = None
 
 
         # prepare data
@@ -64,6 +68,7 @@ class PASCALContext(BaseDataset):
             self.masks = torch.load(mask_file)
         else:
             self.masks = self._preprocess(mask_file)
+
 
     def _class_to_index(self, mask):
         # assert the values

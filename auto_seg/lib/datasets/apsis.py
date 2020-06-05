@@ -24,11 +24,11 @@ class APSISDataset(BaseDataset):
         name = item["name"]
         image = cv2.imread(os.path.join(self.root, 'APSIS/', item["img"]), cv2.IMREAD_COLOR)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        if 'test' in self.list_path:
+        if 'test' in self.list_path and 'val' not in self.list_path:
             size = image.shape
             if self.transform!=None:
                 image = self.transform(image)
-            return image.copy(), np.array(size), name
+            return image, np.array(size), name
         else:
             label = cv2.imread(os.path.join(self.root,
                                             'APSIS/',item["label"]),cv2.IMREAD_GRAYSCALE)

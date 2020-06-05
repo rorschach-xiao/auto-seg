@@ -120,10 +120,21 @@ class ModelEnsemble():
 
         pretrained_dict = torch.load(model_state_file)
         model_dict = model.state_dict()
+        # pretrained_dict_1 = {'model.pretrained.'+k[6:]: v for k, v in pretrained_dict.items()
+        #                   if  'pretrained.'+k[6:] in model_dict.keys() and 'criterion' not in k}
+        # pretrained_dict_2 = {'model.ocr.'+k[6:]: v for k, v in pretrained_dict.items()
+        #                   if  'ocr' in k or 'cls_head' in k and 'criterion' not in k}
+        # pretrained_dict_3 = {'model.'+k[6:]: v for k, v in pretrained_dict.items()
+        #                   if  'aux_head' in k and 'criterion' not in k}
+        # pretrained_dict = {**pretrained_dict_1,**pretrained_dict_2,**pretrained_dict_3}
+
+        print(set(model_dict)-set(k[6:] for k in pretrained_dict if 'criterion' not in k))
         print(set(k[6:] for k in pretrained_dict if 'criterion' not in k) - set(model_dict))
         assert set(k[6:] for k in pretrained_dict if 'criterion' not in k) == set(model_dict)
         pretrained_dict = {k[6:]: v for k, v in pretrained_dict.items()
-                           if  k[6:] in model_dict.keys()}
+                          if  k[6:] in model_dict.keys()}
+        # torch.save(pretrained_dict,model_state_file)
+
         for k, _ in pretrained_dict.items():
                 ModelEnsemble.logger.info(
                 '=> loading {} from pretrained model'.format(k))
@@ -205,7 +216,7 @@ def parse_args():
                         type=str)
     parser.add_argument('--scale_list',
                         help='TTA scale list',
-                        required=True,
+                        default='1.0,',
                         type=str)
     parser.add_argument('opts',
                         help="Modify config options using the command-line",

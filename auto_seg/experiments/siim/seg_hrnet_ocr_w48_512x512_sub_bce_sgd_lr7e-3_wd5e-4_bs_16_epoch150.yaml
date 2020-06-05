@@ -6,7 +6,7 @@ GPUS: (0,1,)
 OUTPUT_DIR: 'output'
 LOG_DIR: 'log'
 WORKERS: 4
-PRINT_FREQ: 10
+PRINT_FREQ: 100
 
 DATASET:
   DATASET: siim
@@ -15,32 +15,31 @@ DATASET:
   TRAIN_SET: 'list/siim/train_sub.txt'
   NUM_CLASSES: 1
 MODEL:
-  NAME: seg_asp_ocr
+  NAME: seg_hrnet_ocr
   NUM_OUTPUTS: 2
-  BACKBONE: "resnest101"
-  DILATION: True
-  PRETRAINED: "./pretrained_models/resnest101-22405ba7.pth"
-  ATROUS_RATE: [12,24,36]
+  BACKBONE: 'hrnet48'
+  PRETRAINED: 'pretrained_models/hrnetv2_w48_imagenet_pretrained.pth'
 
 LOSS:
-  TYPE: "BCE"
-  USE_OHEM: true
+  TYPE : "BCE"
+  USE_OHEM: false
   OHEMTHRES: 0.9
   OHEMKEEP: 131072
   BALANCE_WEIGHTS: [0.4, 1]
+
 TRAIN:
   IMAGE_SIZE:
   - 512
   - 512
   BASE_SIZE: 1024
-  BATCH_SIZE_PER_GPU: 3
+  BATCH_SIZE_PER_GPU: 4
   SHUFFLE: true
   BEGIN_EPOCH: 0
-  END_EPOCH: 80
+  END_EPOCH: 150
   RESUME: true
   OPTIMIZER: sgd
   LR: 0.007
-  WD: 0.0001
+  WD: 0.0005
   MOMENTUM: 0.9
   NESTEROV: false
   RANDOM_ANGLE_DEGREE: 10
@@ -54,12 +53,12 @@ TRAIN:
                'totensor',
                'normalize']
   IGNORE_LABEL: -1
+
 TEST:
   IMAGE_SIZE:
-  - 512
-  - 512
+  - 1024
+  - 1024
   BASE_SIZE: 1024
   BATCH_SIZE_PER_GPU: 2
   FLIP_TEST: true
   MULTI_SCALE: true
-  OUTPUT_INDEX: -1

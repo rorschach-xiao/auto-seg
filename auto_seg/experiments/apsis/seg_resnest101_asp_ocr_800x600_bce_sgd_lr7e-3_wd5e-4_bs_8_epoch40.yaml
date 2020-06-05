@@ -9,10 +9,10 @@ WORKERS: 4
 PRINT_FREQ: 10
 
 DATASET:
-  DATASET: siim
+  DATASET: apsis
   ROOT: 'data/'
-  TEST_SET: 'list/siim/val_sub.txt'
-  TRAIN_SET: 'list/siim/train_sub.txt'
+  TEST_SET: 'list/APSIS/val.txt'
+  TRAIN_SET: 'list/APSIS/train.txt'
   NUM_CLASSES: 1
 MODEL:
   NAME: seg_asp_ocr
@@ -24,7 +24,7 @@ MODEL:
 
 LOSS:
   TYPE: "BCE"
-  USE_OHEM: true
+  USE_OHEM: false
   OHEMTHRES: 0.9
   OHEMKEEP: 131072
   BALANCE_WEIGHTS: [0.4, 1]
@@ -32,20 +32,17 @@ TRAIN:
   IMAGE_SIZE:
   - 512
   - 512
-  BASE_SIZE: 1024
-  BATCH_SIZE_PER_GPU: 3
+  BASE_SIZE: 800
+  BATCH_SIZE_PER_GPU: 2
   SHUFFLE: true
   BEGIN_EPOCH: 0
-  END_EPOCH: 80
+  END_EPOCH: 40
   RESUME: true
   OPTIMIZER: sgd
   LR: 0.007
   WD: 0.0001
   MOMENTUM: 0.9
   NESTEROV: false
-  RANDOM_ANGLE_DEGREE: 10
-  RANDOM_SCALE_MIN: 0.5
-  RANDOM_SCALE_MAX: 1.5
   TRANS_LIST: ['random_scale',
                'random_rotate',
                'random_blur',
@@ -53,12 +50,16 @@ TRAIN:
                'crop',
                'totensor',
                'normalize']
+  RANDOM_ANGLE_DEGREE: 10
+  RANDOM_SCALE_MIN: 0.5
+  RANDOM_SCALE_MAX: 2.0
   IGNORE_LABEL: -1
+
 TEST:
   IMAGE_SIZE:
   - 512
   - 512
-  BASE_SIZE: 1024
+  BASE_SIZE: 800
   BATCH_SIZE_PER_GPU: 2
   FLIP_TEST: true
   MULTI_SCALE: true
