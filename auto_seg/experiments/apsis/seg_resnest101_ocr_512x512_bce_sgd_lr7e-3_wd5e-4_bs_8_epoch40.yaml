@@ -2,46 +2,45 @@ CUDNN:
   BENCHMARK: true
   DETERMINISTIC: false
   ENABLED: true
-GPUS: (0,1,2,3,)
+GPUS: (0,1,)
 OUTPUT_DIR: 'output'
 LOG_DIR: 'log'
 WORKERS: 4
-PRINT_FREQ: 100
+PRINT_FREQ: 10
 
 DATASET:
-  DATASET: cityscapes
+  DATASET: apsis
   ROOT: 'data/'
-  TEST_SET: 'list/cityscapes/val.lst'
-  TRAIN_SET: 'list/cityscapes/train.lst'
-  EXTRA_TRAIN_SET: 'list/cityscapes/trainval.lst'
-  NUM_CLASSES: 19
+  TEST_SET: 'list/APSIS/val.txt'
+  TRAIN_SET: 'list/APSIS/train.txt'
+  NUM_CLASSES: 1
 MODEL:
-  NAME: seg_asp_ocr
+  NAME: seg_ocr
   NUM_OUTPUTS: 2
   BACKBONE: "resnest101"
   DILATION: True
   PRETRAINED: "./pretrained_models/resnest101-22405ba7.pth"
-  ATROUS_RATE: [12,24,36]
+
+
 LOSS:
-  USE_OHEM: true
+  TYPE: "BCE"
+  USE_OHEM: false
   OHEMTHRES: 0.9
   OHEMKEEP: 131072
-  BALANCE_WEIGHTS: [0.4,1]
+  BALANCE_WEIGHTS: [0.4, 1]
 TRAIN:
   IMAGE_SIZE:
-  - 768
-  - 768
-  BASE_SIZE: 2048
-  BATCH_SIZE_PER_GPU: 1
+  - 512
+  - 512
+  BASE_SIZE: 800
+  BATCH_SIZE_PER_GPU: 2
   SHUFFLE: true
   BEGIN_EPOCH: 0
-  END_EPOCH: 240
-  EXTRA_EPOCH: 240
+  END_EPOCH: 40
   RESUME: true
   OPTIMIZER: sgd
-  LR: 0.001
-  EXTRA_LR: 0.0001
-  WD: 0.0005
+  LR: 0.007
+  WD: 0.0001
   MOMENTUM: 0.9
   NESTEROV: false
   TRANS_LIST: ['random_scale',
@@ -51,14 +50,16 @@ TRAIN:
                'crop',
                'totensor',
                'normalize']
-  IGNORE_LABEL: 255
-  NONBACKBONE_KEYWORDS: ['asp_ocr','aux_layer']
+  RANDOM_ANGLE_DEGREE: 10
+  RANDOM_SCALE_MIN: 0.5
+  RANDOM_SCALE_MAX: 2.0
+  IGNORE_LABEL: -1
 
 TEST:
   IMAGE_SIZE:
-  - 768
-  - 768
-  BASE_SIZE: 2048
+  - 512
+  - 512
+  BASE_SIZE: 800
   BATCH_SIZE_PER_GPU: 2
   FLIP_TEST: true
   MULTI_SCALE: true

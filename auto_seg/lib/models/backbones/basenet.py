@@ -47,6 +47,7 @@ class BaseNet(nn.Module):
         self.multi_grid = config.MODEL.MULTI_GRID
         self.multi_dilation = [4, 8, 16]
         if config.MODEL.BN_TYPE == "BN":
+            #self.norm_layer = nn.BatchNorm2d
             self.norm_layer = BatchNorm2d
         elif config.MODEL.BN_TYPE == "GN":
             self.norm_layer = GroupNorm2d

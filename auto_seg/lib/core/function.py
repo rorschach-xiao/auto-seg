@@ -19,6 +19,7 @@ from torch.nn import functional as F
 from utils.utils import AverageMeter
 from utils.utils import get_confusion_matrix
 from utils.utils import adjust_learning_rate
+from utils.distributed import data_prefetcher
 
 import utils.distributed as dist
 from .criterion import iou_dice_binary
@@ -49,11 +50,17 @@ def train(config, epoch, num_epoch, epoch_iters, base_lr,
     writer = writer_dict['writer']
     global_steps = writer_dict['train_global_steps']
 
+    epoch_start = time.time()
+    #TODO
+    #trainloader_ = data_prefetcher(trainloader)
     for i_iter, batch in enumerate(trainloader, 0):
+
+        start = time.time()
+        step_start = start
         images, labels, _, _ = batch
         images = images.cuda()
         labels = labels.long().cuda()
-
+        to_gpu_time = time.time()-start
 
         start = time.time()
         losses, _ = model(images, labels)
@@ -88,7 +95,7 @@ def train(config, epoch, num_epoch, epoch_iters, base_lr,
                                   num_iters,
                                   i_iter+cur_iters)
 
-
+        step_time = time.time()-step_start
 
         if i_iter % config.PRINT_FREQ == 0 and dist.get_rank() == 0:
             msg = 'Epoch: [{}/{}] Iter:[{}/{}], Time: {:.2f}, ' \
@@ -96,9 +103,12 @@ def train(config, epoch, num_epoch, epoch_iters, base_lr,
                       epoch, num_epoch, i_iter, epoch_iters,
                       batch_time.average(), [x['lr'] for x in optimizer.param_groups], ave_loss.average())
             logging.info(msg)
-            logging.info("step_forward_time:{} , step_backward_time:{} , step_optimizer_time:{} , batch_size:{}"
-                         .format(step_forward_time, step_backward_time, step_optimizer_time, images.size()[0]))
+            logging.info("step_forward_time:{} , step_backward_time:{} , step_optimizer_time:{} ,cpu_2_gpu_time:{}, total_step_time:{}, batch_size:{}"
+                         .format(step_forward_time, step_backward_time, step_optimizer_time, to_gpu_time,step_time,images.size()[0]))
 
+    epoch_end = time.time()
+    epoch_total_time = epoch_end-epoch_start
+    print('Epoch total time:{}'.format(epoch_total_time))
     writer.add_scalar('train_loss', ave_loss.average(), global_steps)
     writer_dict['train_global_steps'] = global_steps + 1
 

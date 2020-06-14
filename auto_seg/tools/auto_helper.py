@@ -21,6 +21,7 @@ from core.criterion import CrossEntropy, OhemCrossEntropy,SoftDiceLoss,LovaszHin
 from core.function import train, validate,testval
 from utils.utils import create_logger, FullModel
 from utils.transform import *
+from utils.distributed import data_prefetcher
 
 
 from config import config
@@ -120,8 +121,9 @@ class AutoTrainer():
             num_workers=cfg.WORKERS,
             pin_memory=True,
             sampler=val_sampler)
-
-        AutoTrainer.trainloader=trainloader
+        # TODO
+        #AutoTrainer.trainloader=data_prefetcher(trainloader)
+        AutoTrainer.trainloader = trainloader
         AutoTrainer.train_dataset=train_dataset
         AutoTrainer.valloader = valloader
         AutoTrainer.val_dataset=val_dataset

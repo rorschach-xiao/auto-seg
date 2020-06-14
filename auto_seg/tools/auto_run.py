@@ -48,6 +48,8 @@ def train_main_worker(local_rank,
                       optimizer = 'adam',
                       **kwargs):
     # 更新config
+    #TODO
+    config.PRINT_FREQ=2
     config.DATASET.NUM_CLASSES = int(num_class)
     config.DATASET.ROOT = data_root
     config.DATASET.DATASET = 'custom'
@@ -105,8 +107,10 @@ def train_main_worker(local_rank,
     else:
         assert config.DATASET.NUM_CLASSES==1
         assert len(total_lable_count)==2
+        #TODO
+        config.TRAIN.BATCH_SIZE_PER_GPU = batch_size_per_gpu = 4
         config.LOSS.TYPE = "BCE"
-        if total_lable_count[1]<0.1*total_lable_count[0]: # 二分类正负样本不均衡情况下的调整
+        if total_lable_count[1]<0.01*total_lable_count[0]: # 二分类正负样本不均衡情况下的调整
             config.MODEL.BACKBONE = "resnest50"
             config.MODEL.NAME = "seg_asp_ocr"
             config.MODEL.PRETRAINED = "pretrained_models/resnest50-528c19ca.pth"
@@ -155,14 +159,15 @@ def train_main_worker(local_rank,
     port = random.randint(1000,5000)
     os.environ['MASTER_ADDR'] = '127.0.0.1'
     os.environ['MASTER_PORT'] = str(port)
-
     # DDP初始化
+
     device = torch.device('cuda:{}'.format(local_rank))
     print(device)
     torch.cuda.set_device(device)
     dist.init_process_group(
         backend="nccl", init_method="env://", rank=local_rank, world_size=world_size
     )
+
     # 数据准备
     batch_size = batch_size_per_gpu * len(gpus)
 

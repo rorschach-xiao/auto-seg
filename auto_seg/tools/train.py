@@ -28,6 +28,12 @@ from core.function import train, validate
 from utils.modelsummary import get_model_summary
 from utils.utils import create_logger, FullModel
 from utils.transform import *
+from utils.distributed import data_prefetcher
+# from prefetch_generator import BackgroundGenerator
+
+# class DataLoaderX(torch.utils.data.DataLoader):
+#     def __iter__(self):
+#         return BackgroundGenerator(super().__iter__())
 
 
 def parse_args():
@@ -94,6 +100,17 @@ def main():
     # build model
     model = eval('models.nets.' + config.MODEL.NAME +
                      '.get_seg_model')(config)
+    # pretrained_dict = torch.load(config.TEST.MODEL_FILE)
+    # model_dict = model.state_dict()
+    #
+    # assert set(k[6:] for k in pretrained_dict if 'criterion' not in k) == set(model_dict)
+    # pretrained_dict = {k[6:]: v for k, v in pretrained_dict.items()
+    #                    if k[6:] in model_dict.keys()}
+    # for k, _ in pretrained_dict.items():
+    #     logger.info(
+    #         '=> loading {} from pretrained model'.format(k))
+    # model_dict.update(pretrained_dict)
+    # model.load_state_dict(model_dict, strict=False)
 
     # dump_input = torch.rand(
     #     (1, 3, config.TRAIN.IMAGE_SIZE[1], config.TRAIN.IMAGE_SIZE[0])
@@ -127,6 +144,15 @@ def main():
         transform=train_transform)
 
     train_sampler = get_sampler(train_dataset)
+    # trainloader = DataLoaderX(
+    #     train_dataset,
+    #     batch_size=batch_size,
+    #     shuffle=config.TRAIN.SHUFFLE and train_sampler is None,
+    #     num_workers=config.WORKERS,
+    #     pin_memory=True,
+    #     drop_last=True,
+    #     sampler=train_sampler
+    # )
     trainloader = torch.utils.data.DataLoader(
         train_dataset,
         batch_size=batch_size,
@@ -135,6 +161,7 @@ def main():
         pin_memory=True,
         drop_last=True,
         sampler=train_sampler)
+
 
     extra_epoch_iters = 0
     if config.DATASET.EXTRA_TRAIN_SET:
