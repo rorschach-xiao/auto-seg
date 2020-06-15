@@ -3,7 +3,7 @@ import cv2
 from tqdm import tqdm
 import numpy as np
 import csv
-from .mask_functions import mask2rle
+from mask_functions import mask2rle
 import os
 import argparse
 
@@ -37,7 +37,7 @@ def apply_thresholds(mask, area_threshold, min_contour_area):
 
 
 def remove_smallest(mask, min_contour_area):
-    _, contours, _ = cv2.findContours(
+    contours, _ = cv2.findContours(
         mask.copy(), cv2.RETR_TREE,
         cv2.CHAIN_APPROX_SIMPLE
     )
@@ -63,7 +63,7 @@ def main():
         for img in tqdm(test_list):
             name = img.split(".")[0]
             mask = cv2.imread(os.path.join(test_path, img), cv2.IMREAD_GRAYSCALE)
-            rle = apply_thresholds(mask, args.area_thres, args.min_contour_area)
+            rle = apply_thresholds(mask, int(args.area_thres), int(args.min_contour_area))
             if rle == "":
                 # print("empty mask!")
                 rle = "-1"

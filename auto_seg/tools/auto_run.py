@@ -30,7 +30,7 @@ def train_main_worker(local_rank,
                       data_root,
                       record_root,
                       num_class,
-                      total_lable_count,
+                      empty_rate,
                       base_size = 1024,
                       crop_size = (512,512),
                       epoch = 40,
@@ -39,7 +39,7 @@ def train_main_worker(local_rank,
                       model_name = "seg_hrnet",
                       pretrained_path = 'pretrained_models/hrnetv2_w18_imagenet_pretrained.pth',
                       gpus=[0, 1],
-                      batch_size_per_gpu = 8,
+                      batch_size_per_gpu = 6,
                       init_lr = 1e-3,
                       random_seed = 304,
                       dilation = True,
@@ -48,18 +48,19 @@ def train_main_worker(local_rank,
                       optimizer = 'adam',
                       **kwargs):
     # 更新config
-    #TODO
-    config.PRINT_FREQ=2
+
     config.DATASET.NUM_CLASSES = int(num_class)
     config.DATASET.ROOT = data_root
     config.DATASET.DATASET = 'custom'
     config.MODEL.NAME = model_name
     config.MODEL.BACKBONE = backbone
     config.MODEL.NUM_OUTPUTS = 2
-    if config.MODEL.NAME=='seg_hrnet_ocr':
-        config.TRAIN.NONBACKBONE_KEYWORDS = ['ocr','aux_layer']
+    if config.MODEL.NAME=='seg_asp_ocr':
+        config.TRAIN.NONBACKBONE_KEYWORDS = ['asp_ocr', 'aux_layer']
+        config.MODEL.NUM_OUTPUTS = 2
     else:
-        config.TRAIN.NONBACKBONE_KEYWORDS = ['asp_ocr','aux_layer']
+        config.MODEL.NUM_OUTPUTS = 1
+
     config.MODEL.PRETRAINED = pretrained_path
     config.MODEL.DILATION = dilation
     config.MODEL.ATROUS_RATE = atrous_rate
@@ -106,13 +107,11 @@ def train_main_worker(local_rank,
         config.TRAIN.BATCH_SIZE_PER_GPU = batch_size_per_gpu = 4
     else:
         assert config.DATASET.NUM_CLASSES==1
-        assert len(total_lable_count)==2
-        #TODO
-        config.TRAIN.BATCH_SIZE_PER_GPU = batch_size_per_gpu = 4
         config.LOSS.TYPE = "BCE"
-        if total_lable_count[1]<0.01*total_lable_count[0]: # 二分类正负样本不均衡情况下的调整
+        if empty_rate>0.5: # 二分类正负样本不均衡情况下的调整
             config.MODEL.BACKBONE = "resnest50"
             config.MODEL.NAME = "seg_asp_ocr"
+            config.MODEL.NUM_OUTPUTS = 2
             config.MODEL.PRETRAINED = "pretrained_models/resnest50-528c19ca.pth"
             config.TRAIN.LR = 0.007
             config.TRAIN.BATCH_SIZE_PER_GPU = batch_size_per_gpu = 4
@@ -210,9 +209,9 @@ def train(data_root,record_root,cuda_visible_devices='0,1,2,3'):
     trainloader = torch.utils.data.DataLoader(train_dataset,batch_size=1)
 
     # 确定 crop_size , 类别数量以及增强策略
-    crop_size,base_size,num_class,aug_type,total_label_count = AutoTrainer.Find_Crop_Size_And_NClass(trainloader)
+    crop_size,base_size,num_class,aug_type,total_label_count,empty_rate = AutoTrainer.Find_Crop_Size_And_NClass(trainloader)
 
-    print(total_label_count)
+    print(empty_rate)
 
     # 确定训练epoch
     epoch = AutoTrainer.Find_Epoch(num_class=num_class,dataset=train_dataset)
@@ -227,7 +226,7 @@ def train(data_root,record_root,cuda_visible_devices='0,1,2,3'):
     gpus = list(range(0, gpu_num))
 
     mp.spawn(train_main_worker,nprocs = world_size,args=(world_size,queue,data_root,record_root,
-                                              num_class,total_label_count,base_size,crop_size,epoch,aug_type,
+                                              num_class,empty_rate,base_size,crop_size,epoch,aug_type,
                                               backbone,net,pretrained_path, gpus))
     return queue.get(block = False)
 

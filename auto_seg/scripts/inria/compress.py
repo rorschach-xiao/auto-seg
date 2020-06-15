@@ -13,7 +13,8 @@ import sys
 
 input_dir = sys.argv[1]
 output_dir = sys.argv[2]
-
+if not os.path.exists(output_dir):
+    os.makedirs(output_dir)
 for file in os.listdir(input_dir):
     if file.endswith(".tif"):
         input_file = os.path.join(input_dir,file)

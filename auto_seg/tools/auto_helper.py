@@ -224,6 +224,8 @@ class AutoTrainer():
         avg_h = 0.0
         avg_w = 0.0
         nclass = -1
+        num_of_empty = 0
+        total_num = 0
         total_label_count = np.array([])
         print("searching hyper parameters...")
         for idx, batch in enumerate(dataloader):
@@ -231,6 +233,9 @@ class AutoTrainer():
             _,ori_h,ori_w,_ = image.shape
             label_uni = np.unique(label)
             label_count = np.bincount(label.reshape(-1))
+            total_num+=1
+            if (label_uni[label_uni!=ignore_label]==[0]).all():
+                num_of_empty+=1
 
             # 统计每种label的数量
             if label_count.size > total_label_count.size:
@@ -252,12 +257,13 @@ class AutoTrainer():
             aug_type = "resize"
         AutoTrainer.crop_size=crop_size
         base_size = max(int(avg_h),int(avg_w))
+        empty_rate = num_of_empty/total_num
         print("searching done!")
         if nclass == 1:
-            return crop_size,base_size,nclass,aug_type,total_label_count
+            return crop_size,base_size,nclass,aug_type,total_label_count,empty_rate
         else:
             aug_type = "crop"
-            return crop_size,base_size,nclass+1,aug_type,total_label_count
+            return crop_size,base_size,nclass+1,aug_type,total_label_count,empty_rate
 
 
     @staticmethod
@@ -280,7 +286,7 @@ class AutoTrainer():
     def Find_Network(num_class):
         if num_class==1:
             backbone = 'hrnet18'
-            net = 'seg_hrnet_ocr'
+            net = 'seg_hrnet'
             pretrained_model_path = 'pretrained_models/hrnetv2_w18_imagenet_pretrained.pth'
         else:
             backbone = 'resnest101'

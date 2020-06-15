@@ -20,6 +20,8 @@ def main():
     test_results_list = os.listdir(test_results_path)
     convert_results_path = args.submit_dir
     large_img_list = []
+    if not os.path.exists(convert_results_path):
+        os.makedirs(convert_results_path)
 
     for i in test_results_list:
         origin_img_name = i.split("_")[0]
@@ -37,7 +39,7 @@ def main():
                 col = ((i - 1) % 10) * 500
                 # print(row,col)
                 large_img[row:row + 500, col:col + 500] += image
-        Image.fromarray(large_img).save(convert_results_path + img + ".tif")
+        Image.fromarray(large_img).save(os.path.join(convert_results_path, img + ".tif"))
 
 if __name__ =='__main__':
     main()
