@@ -113,7 +113,7 @@
                             alert("模型正在测试中，请在测试完成后再提交推理");
                             return;
                         }
-                        else if(result.return != "trained"){
+                        else if(result.return == "non-trained"){
                             alert("模型尚未训练过，请先提交训练任务");
                             return;
                         }
