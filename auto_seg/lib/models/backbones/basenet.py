@@ -10,6 +10,7 @@ from ..tools.bn_helper import BatchNorm2d, GroupNorm2d,BatchNorm2d_class, relu_i
 from .hrnet import hrnet64,hrnet48,hrnet32,hrnet18
 from .resnest import resnest50,resnest101,resnest200
 from .resnet import resnet50,resnet101,resnet152
+from config.models import MODEL_CONFIGS
 
 import torch.nn.functional as F
 
@@ -56,7 +57,10 @@ class BaseNet(nn.Module):
 
         self.model_path = config.MODEL.PRETRAINED
         self.ispretrained = (config.MODEL.PRETRAINED != "")
-        self.base_outchannel = 2048
+        if 'hrnet' in self.backbone:
+            self.base_outchannel = sum(MODEL_CONFIGS[self.backbone].STAGE4.NUM_CHANNELS)
+        else:
+            self.base_outchannel = 2048
         self.deep_base = config.MODEL.DEEPBASE
         self.spm_on = config.MODEL.SPM
 

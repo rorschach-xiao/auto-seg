@@ -51,7 +51,7 @@ def train(config, epoch, num_epoch, epoch_iters, base_lr,
     global_steps = writer_dict['train_global_steps']
 
     epoch_start = time.time()
-    #TODO
+
     #trainloader_ = data_prefetcher(trainloader)
     for i_iter, batch in enumerate(trainloader, 0):
 
@@ -212,7 +212,6 @@ def testval(config, test_dataset, testloader, model,
         for index, batch in enumerate(tqdm(testloader)):
             image, label, _, name = batch
             size = label.size()
-
             pred = test_dataset.multi_scale_inference(
                 config,
                 model,

@@ -14,14 +14,22 @@ class ASP_OCRNet(BaseNet):
         super(ASP_OCRNet, self).__init__(config, **kwargs)
         ocr_mid_channels = config.MODEL.OCR.MID_CHANNELS #256
         ocr_key_channels = config.MODEL.OCR.KEY_CHANNELS #256
+
         self.aux = aux
         self.asp_ocr = ASP_OCRHead(config.DATASET.NUM_CLASSES, ocr_mid_channels, ocr_key_channels,norm_layer=self.norm_layer,
                            base_outchannel=self.base_outchannel)
-        self.aux_layer = nn.Sequential(nn.Conv2d(1024, 512, 3, padding=1, bias=False),
-                                       self.norm_layer(512),
+        if 'hrnet' in self.backbone:
+            self.aux_layer = nn.Sequential(nn.Conv2d(self.base_outchannel,self.base_outchannel, 3, padding=1, bias=False),
+                                       self.norm_layer(self.base_outchannel),
                                        nn.ReLU(),
                                        nn.Dropout2d(0.1, False),
-                                       nn.Conv2d(512, config.DATASET.NUM_CLASSES, 1,bias=True))
+                                       nn.Conv2d(self.base_outchannel, config.DATASET.NUM_CLASSES, 1,bias=True))
+        else:
+            self.aux_layer = nn.Sequential(nn.Conv2d(1024,512, 3, padding=1, bias=False),
+                                           self.norm_layer(512),
+                                           nn.ReLU(),
+                                           nn.Dropout2d(0.1, False),
+                                           nn.Conv2d(512, config.DATASET.NUM_CLASSES, 1,bias=True))
 
     def base_forward(self, x):
         x = self.pretrained.conv1(x)
@@ -37,7 +45,10 @@ class ASP_OCRNet(BaseNet):
 
     def forward(self, x):
         imsize = x.size()[2:]
-        _, _, c3, c4 = self.base_forward(x)
+        if 'hrnet' in self.backbone:
+            c3 = c4 = self.hrnet_forward(x)
+        else:
+            _, _, c3, c4 = self.base_forward(x)
         out = []
 
         if self.aux:

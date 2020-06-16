@@ -1,0 +1,65 @@
+CUDNN:
+  BENCHMARK: true
+  DETERMINISTIC: false
+  ENABLED: true
+GPUS: (0,1,2,3)
+OUTPUT_DIR: 'output'
+LOG_DIR: 'log'
+WORKERS: 4
+PRINT_FREQ: 100
+
+DATASET:
+  DATASET: Magnetic
+  ROOT: 'data/'
+  TEST_SET: 'list/Magnetic/val.txt'
+  TRAIN_SET: 'list/Magnetic/train.txt'
+  NUM_CLASSES: 1
+MODEL:
+  NAME: seg_asp_ocr
+  NUM_OUTPUTS: 2
+  BACKBONE: "resnest101"
+  DILATION: True
+  PRETRAINED: "./pretrained_models/resnest101-22405ba7.pth"
+  ATROUS_RATE: [12,24,36]
+LOSS:
+  TYPE : "BCE"
+  USE_OHEM: false
+  OHEMTHRES: 0.9
+  OHEMKEEP: 131072
+  BALANCE_WEIGHTS: [0.4, 1]
+
+TRAIN:
+  IMAGE_SIZE:
+  - 360
+  - 360
+  BASE_SIZE: 360
+  BATCH_SIZE_PER_GPU: 6
+  SHUFFLE: true
+  BEGIN_EPOCH: 0
+  END_EPOCH: 50
+  RESUME: true
+  OPTIMIZER: sgd
+  LR: 0.007
+  WD: 0.0005
+  MOMENTUM: 0.9
+  NESTEROV: false
+  RANDOM_ANGLE_DEGREE: 10
+  TRANS_LIST: ['random_rotate',
+               'random_blur',
+               'random_hflip',
+               'crop',
+               'totensor',
+               'normalize']
+  IGNORE_LABEL: -1
+VAL:
+  TRANS_LIST: ['crop',
+               'totensor',
+               'normalize']
+TEST:
+  IMAGE_SIZE:
+  - 360
+  - 360
+  BASE_SIZE: 360
+  BATCH_SIZE_PER_GPU: 6
+  FLIP_TEST: true
+  MULTI_SCALE: true

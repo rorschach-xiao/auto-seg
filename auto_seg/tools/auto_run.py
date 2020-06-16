@@ -291,6 +291,7 @@ class InferenceJob(BaseDataset):
     继承BaseDataset 调用其中multi_scale_inference方法
     '''
     def __init__(self,output_root,cuda_visible_devices='0,1'):
+
         self.output_root = output_root
         self.model = None
         self.transform = Compose([ToTensor()])
@@ -307,10 +308,9 @@ class InferenceJob(BaseDataset):
         config.MODEL.BACKBONE = self.param_dict['backbone']
         config.DATASET.NUM_CLASSES = self.param_dict['nclass']
 
-        # TODO
         config.TEST.IMAGE_SIZE = self.param_dict['crop_size'][::-1] #(w,h)
         config.TEST.BASE_SIZE = max(config.TEST.IMAGE_SIZE)
-        config.TEST.SCALE_LIST = [0.5, 1.0, 1.5]
+
         config.TEST.MODEL_FILE = os.path.join(output_root, 'final_state.pth')
         config.TEST.FLIP_TEST = True
         if config.MODEL.NAME == 'seg_hrnet':
@@ -426,12 +426,13 @@ class InferenceJob(BaseDataset):
         frames_list = os.listdir(frames_dir)
         for frame in tqdm(frames_list):
             frame_name = frame.split(".")[0]
-            img = cv2.imread(os.path.join(frames_dir,frame))
+            img = cv2.imread(os.path.join(frames_dir,frame),cv2.IMREAD_COLOR)
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             img = self.transform(img)
             img = img.unsqueeze(0)
             img.to(self.device)
             size = img.size()
+
             pred = self.multi_scale_inference(
                 self.cfg,
                 self.model,
@@ -441,6 +442,7 @@ class InferenceJob(BaseDataset):
                 stride_rate=self.cfg.TEST.STRIDE_RATE)
             pred = torch.from_numpy(np.expand_dims(pred, 0))
             pred = pred.permute((0, 3, 1, 2))
+            print(pred.size())
             if pred.size()[-2] != size[-2] or pred.size()[-1] != size[-1]:
                 pred = F.interpolate(
                     pred, size[-2:],
@@ -452,6 +454,7 @@ class InferenceJob(BaseDataset):
             else:
                 pred = np.asarray(np.argmax(pred.cpu(), axis=1), dtype=np.uint8)
             pred = pred.squeeze()
+
             cv2.imwrite(os.path.join(frames_out_dir,frame_name+".png"),pred)
         pred_video_path = InferenceJob.frame2video(frames_out_dir,video_name,"out_seg_video.avi",
                                                    _fps,1,len(frames_list),(_width,_height),_fourcc)
