@@ -136,7 +136,7 @@
                             }
                         },
                         error:function(){
-                            $('#inference_text').html("训练请求发送失败！\n请检查错误或联系管理员");
+                            $('#inference_text').html("推理请求发送失败！\n请检查错误或联系管理员");
                         }
                         });
                 },
@@ -246,9 +246,10 @@
                 success: function (result) {
                     result = $.parseJSON(result);
                     if (result.return == "testing") {
-                        setTimeout("ask_test_status()", 30000);
+                        setTimeout("ask_test_status()", 1000);
                     }
                     else if (result.return == "tested") {
+                        console.log('loop ask return', result);
                         $('#test_text').html("测试完成，下面是测试结果:\n" + result.records);
                     }
                     else if (result.return == "trained"){
@@ -293,7 +294,14 @@
                                 else {
                                     $('#test_text').html("训练请求发送失败！\n请检查错误或联系管理员\n" + result.return);
                                 }
-                            }
+                            },
+                        // complete : function(XMLHttpRequest,status){
+                        //         console.log('-------------------------');
+                        //         if(status=='timeout'){//超时,status还有success,error等值的情况
+                        //          // 　　　　　 ajaxTimeOut.abort(); //取消请求
+                        //         　　　　　  console.log('训练超时');
+                        //         　　　　}
+                        //         }
                     });
                     $('#train_text').html("训练任务已提交，训练时间较长，查看训练结果，请刷新页面");
 
@@ -337,7 +345,7 @@
                         timeout: 0,
                         success : function(result) {
                                 result = $.parseJSON(result);
-                                console.log(result)
+                                console.log('test return', result);
                                 if (result.return == "success") {
                                     $('#test_text').html("模型测试完成，下面是测试结果:\n" + result.records);
                                 }
@@ -347,11 +355,17 @@
                                 else {
                                     $('#test_text').html("测试失败！\n请检查错误或联系管理员\n" + result.return);
                                 }
-                            }
+                            },
+                    //     complete : function(XMLHttpRequest,status){
+                    // 　　　　if(status=='timeout'){//超时,status还有success,error等值的情况
+                    //  // 　　　　　 ajaxTimeOut.abort(); //取消请求
+                    // 　　　　　  console.log('测试超时');
+                    // 　　　　}
+                    // 　　}
                     });
                     $('#test_text').html("测试任务已提交，请勿刷新页面，否则测试结果无法显示！！！");
 
-                    setTimeout("ask_test_status()", 10000);
+                    setTimeout("ask_test_status()", 1000);
                 },
                 error: function (msg) {
                     $('#test_text').html('Error:' + msg)
