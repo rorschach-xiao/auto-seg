@@ -307,10 +307,8 @@ class InferenceJob(BaseDataset):
         config.MODEL.NAME = self.param_dict['net']
         config.MODEL.BACKBONE = self.param_dict['backbone']
         config.DATASET.NUM_CLASSES = self.param_dict['nclass']
-
         config.TEST.IMAGE_SIZE = self.param_dict['crop_size'][::-1] #(w,h)
         config.TEST.BASE_SIZE = max(config.TEST.IMAGE_SIZE)
-        # 123123
         config.TEST.MODEL_FILE = os.path.join(output_root, 'final_state.pth')
         config.TEST.FLIP_TEST = True
         if config.MODEL.NAME == 'seg_hrnet':
@@ -394,6 +392,7 @@ class InferenceJob(BaseDataset):
         image = self._transform(raw_image)
         image.to(self.device)
         size = image.size()
+        self.cfg.TEST.SCALE_LIST = [1]
         pred = self.multi_scale_inference(
             self.cfg,
             self.model,
@@ -417,6 +416,7 @@ class InferenceJob(BaseDataset):
         return pred
 
     def _run_video(self,video_path):
+        self.cfg.TEST.SCALE_LIST = [1]
         video_name = os.path.basename(video_path)
         frames_dir = os.path.join(*(os.path.split(video_path)[:-1]),"frames_dir")
         frames_out_dir = os.path.join(*(os.path.split(video_path)[:-1]),"frames_out_dir")
