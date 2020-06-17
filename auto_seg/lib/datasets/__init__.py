@@ -20,5 +20,7 @@ from .inria import InriaDataset as inria
 from .apsis import APSISDataset as apsis
 from .Magnetic import MagneticDataset as Magnetic
 from .optic import OPTIC as optic
+from .crackforest import CrackForestDataset as crackforest
+from .kolektorsdd import KolektorSDDDataset as kolektorsdd
 
 

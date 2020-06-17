@@ -21,8 +21,16 @@ class DeepLabV3(BaseNet):
         super(DeepLabV3, self).__init__(config,**kwargs)
         self.atrous_rate = config.MODEL.ATROUS_RATE #  [6,12,18] for stride 16, [12,24,36] for stride 8
         self.aspp = ASPP(num_classes=self.nclass,atrous_rate=self.atrous_rate,inchannel=2048,norm_layer=self.norm_layer)
+
         self.aux = aux
-        self.aux_layer = nn.Sequential(nn.Conv2d(1024, 256, 3, padding=1, bias=False),
+        if 'hrnet' in self.backbone:
+            self.aux_layer = nn.Sequential(nn.Conv2d(self.base_outchannel,self.base_outchannel, 3, padding=1, bias=False),
+                                       self.norm_layer(self.base_outchannel),
+                                       nn.ReLU(),
+                                       nn.Dropout2d(0.1, False),
+                                       nn.Conv2d(self.base_outchannel, config.DATASET.NUM_CLASSES, 1,bias=True))
+        else:
+            self.aux_layer = nn.Sequential(nn.Conv2d(1024, 256, 3, padding=1, bias=False),
                                        self.norm_layer(256),
                                        nn.ReLU(),
                                        nn.Dropout2d(0.1, False),
