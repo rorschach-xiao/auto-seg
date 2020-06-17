@@ -310,7 +310,7 @@ class InferenceJob(BaseDataset):
 
         config.TEST.IMAGE_SIZE = self.param_dict['crop_size'][::-1] #(w,h)
         config.TEST.BASE_SIZE = max(config.TEST.IMAGE_SIZE)
-
+        # 123123
         config.TEST.MODEL_FILE = os.path.join(output_root, 'final_state.pth')
         config.TEST.FLIP_TEST = True
         if config.MODEL.NAME == 'seg_hrnet':
@@ -432,7 +432,8 @@ class InferenceJob(BaseDataset):
             img = img.unsqueeze(0)
             img.to(self.device)
             size = img.size()
-
+            #TODO
+            print(self.cfg.TEST.SCALE_LIST)
             pred = self.multi_scale_inference(
                 self.cfg,
                 self.model,
@@ -442,7 +443,7 @@ class InferenceJob(BaseDataset):
                 stride_rate=self.cfg.TEST.STRIDE_RATE)
             pred = torch.from_numpy(np.expand_dims(pred, 0))
             pred = pred.permute((0, 3, 1, 2))
-            print(pred.size())
+
             if pred.size()[-2] != size[-2] or pred.size()[-1] != size[-1]:
                 pred = F.interpolate(
                     pred, size[-2:],
