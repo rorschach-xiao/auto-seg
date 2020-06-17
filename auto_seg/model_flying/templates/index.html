@@ -252,7 +252,7 @@
                         $('#test_text').html("测试完成，下面是测试结果:\n" + result.records);
                     }
                     else if (result.return == "trained"){
-                        $('#test_text').html("训练请求发送失败！\n请检查错误或联系管理员");
+                        $('#test_text').html("测试请求发送失败！\n请检查错误或联系管理员");
                     }
                 },
             });
@@ -332,7 +332,7 @@
                         url : "segment/test",
                         type : "POST",
                         contentType: "application/json;charset=utf-8",
-                        // {#async : true,#}
+                        async : true,
                         dataType : "text",
                         timeout: 0,
                         success : function(result) {
