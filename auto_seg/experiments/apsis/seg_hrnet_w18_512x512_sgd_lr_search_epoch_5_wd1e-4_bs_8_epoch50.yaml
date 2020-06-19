@@ -1,0 +1,70 @@
+CUDNN:
+  BENCHMARK: true
+  DETERMINISTIC: false
+  ENABLED: true
+GPUS: (0,1)
+OUTPUT_DIR: 'output'
+LOG_DIR: 'log'
+WORKERS: 4
+PRINT_FREQ: 1
+
+DATASET:
+  DATASET: apsis
+  ROOT: 'data/'
+  TEST_SET: 'list/APSIS/val.txt'
+  TRAIN_SET: 'list/APSIS/train.txt'
+  NUM_CLASSES: 1
+MODEL:
+  NAME: seg_hrnet
+  BACKBONE: "hrnet18"
+  NUM_OUTPUTS: 1
+  PRETRAINED: 'pretrained_models/hrnetv2_w18_imagenet_pretrained.pth'
+
+LOSS:
+  TYPE: "BCE"
+  USE_OHEM: true
+  OHEMTHRES: 0.9
+  OHEMKEEP: 131072
+  BALANCE_WEIGHTS: [1]
+TRAIN:
+  IMAGE_SIZE:
+  - 600
+  - 800
+  BASE_SIZE: 800
+  BATCH_SIZE_PER_GPU: 6
+  SHUFFLE: true
+  BEGIN_EPOCH: 0
+  END_EPOCH: 50
+  RESUME: true
+  OPTIMIZER: adam
+  LR: 0.001
+  IS_SEARCH_LR: True
+  BASE_MAX_LR: 1
+  BASE_MIN_LR: 0.0001
+  SEARCH_EPOCH: 5
+  WD: 0.0001
+  MOMENTUM: 0.9
+  NESTEROV: false
+  TRANS_LIST: ['random_scale',
+               'random_rotate',
+               'random_blur',
+               'random_hflip',
+               'crop',
+               'totensor',
+               'normalize']
+  RANDOM_ANGLE_DEGREE: 20
+  RANDOM_SCALE_MIN: 0.5
+  RANDOM_SCALE_MAX: 1.5
+
+VAL:
+  TRANS_LIST: ['crop',
+               'totensor',
+               'normalize']
+TEST:
+  IMAGE_SIZE:
+  - 512
+  - 512
+  BASE_SIZE: 512
+  BATCH_SIZE_PER_GPU: 2
+  FLIP_TEST: true
+  MULTI_SCALE: true

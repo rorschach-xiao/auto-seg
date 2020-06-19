@@ -25,6 +25,7 @@ from config import update_config
 from core.criterion import CrossEntropy, OhemCrossEntropy,SoftDiceLoss,LovaszHinge,\
     LovaszSoftmax,LovaszSigmoid,StableBCELoss,ComboLoss,RMILoss
 from core.function import train, validate
+from core.lr_search import InitLRFindJob
 from utils.modelsummary import get_model_summary
 from utils.utils import create_logger, FullModel
 from utils.transform import *
@@ -88,6 +89,9 @@ def main():
     cudnn.benchmark = config.CUDNN.BENCHMARK
     cudnn.deterministic = config.CUDNN.DETERMINISTIC
     cudnn.enabled = config.CUDNN.ENABLED
+
+
+
     gpus = list(config.GPUS)
     distributed = args.local_rank >= 0
     if distributed:
@@ -96,7 +100,10 @@ def main():
         torch.distributed.init_process_group(
             backend="nccl", init_method="env://",
         )
-
+    # initial lr search
+    if config.TRAIN.IS_SEARCH_LR:
+        lr_find_job = InitLRFindJob(config,args,final_output_dir)
+        opt_lr = lr_find_job._run_search()
     # build model
     model = eval('models.nets.' + config.MODEL.NAME +
                      '.get_seg_model')(config)
@@ -251,6 +258,11 @@ def main():
         model = nn.DataParallel(model, device_ids=gpus).cuda()
 
     # optimizer
+    if config.TRAIN.IS_SEARCH_LR:
+        config.defrost()
+        config.TRAIN.LR = float(opt_lr)
+        config.freeze()
+
     def _get_parameter(model):
         params_dict = dict(model.named_parameters())
         if config.TRAIN.NONBACKBONE_KEYWORDS:
