@@ -2,46 +2,45 @@ CUDNN:
   BENCHMARK: true
   DETERMINISTIC: false
   ENABLED: true
-GPUS: (0,1)
+GPUS: (0,1,2,3)
 OUTPUT_DIR: 'output'
 LOG_DIR: 'log'
 WORKERS: 4
-PRINT_FREQ: 1
+PRINT_FREQ: 10
 
 DATASET:
-  DATASET: apsis
+  DATASET: voc_sbd
   ROOT: 'data/'
-  TEST_SET: 'list/APSIS/val.txt'
-  TRAIN_SET: 'list/APSIS/train.txt'
-  NUM_CLASSES: 1
+  TEST_SET: 'list/voc_sbd/val.txt'
+  TRAIN_SET: 'list/voc_sbd/train.txt'
+  NUM_CLASSES: 21
 MODEL:
-  NAME: seg_hrnet
-  BACKBONE: "hrnet18"
-  NUM_OUTPUTS: 1
-  PRETRAINED: 'pretrained_models/hrnetv2_w18_imagenet_pretrained.pth'
-
+  NAME: seg_asp_ocr
+  NUM_OUTPUTS: 2
+  BACKBONE: "resnest101"
+  PRETRAINED: "./pretrained_models/resnest101-22405ba7.pth"
+  DILATION: True
+  ATROUS_RATE: [12,24,36]
 LOSS:
-  TYPE: "BCE"
   USE_OHEM: true
   OHEMTHRES: 0.9
   OHEMKEEP: 131072
-  BALANCE_WEIGHTS: [1]
+  BALANCE_WEIGHTS: [0.4,1]
 TRAIN:
   IMAGE_SIZE:
-  - 600
-  - 800
-  BASE_SIZE: 800
-  BATCH_SIZE_PER_GPU: 6
+  - 473
+  - 473
+  BASE_SIZE: 520
+  BATCH_SIZE_PER_GPU: 3
   SHUFFLE: true
   BEGIN_EPOCH: 0
   END_EPOCH: 50
   RESUME: true
-  OPTIMIZER: adam
-  LR: 0.001
+  OPTIMIZER: sgd
   IS_SEARCH_LR: True
   BASE_MAX_LR: 1
   BASE_MIN_LR: 0.0001
-  SEARCH_EPOCH: 20
+  SEARCH_EPOCH: 10
   WD: 0.0001
   MOMENTUM: 0.9
   NESTEROV: false
@@ -52,19 +51,21 @@ TRAIN:
                'crop',
                'totensor',
                'normalize']
-  RANDOM_ANGLE_DEGREE: 20
+  RANDOM_ANGLE_DEGREE: 10
   RANDOM_SCALE_MIN: 0.5
-  RANDOM_SCALE_MAX: 1.5
-
+  RANDOM_SCALE_MAX: 2.0
+  IGNORE_LABEL: 255
+  NONBACKBONE_KEYWORDS: ['asp_ocr','aux_layer']
 VAL:
   TRANS_LIST: ['crop',
                'totensor',
                'normalize']
 TEST:
   IMAGE_SIZE:
-  - 512
-  - 512
-  BASE_SIZE: 512
-  BATCH_SIZE_PER_GPU: 2
+  - 473
+  - 473
+  BASE_SIZE: 520
+  BATCH_SIZE_PER_GPU: 3
   FLIP_TEST: true
   MULTI_SCALE: true
+  OUTPUT_INDEX: -1

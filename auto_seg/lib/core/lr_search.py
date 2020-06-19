@@ -159,10 +159,30 @@ class InitLRFindJob(object):
 
         return max_lr,list(predict_y),list(smooth_loss)
 
-    def _run_search(self):
+    def _run_search(self,config):
         start = time.time()
         self.model.train()
-        optimizer = optim.SGD(self.model.parameters(), lr=self.base_min_lr,
+
+        def _get_parameter(model):
+            params_dict = dict(model.named_parameters())
+            if config.TRAIN.NONBACKBONE_KEYWORDS:
+                bb_lr = []
+                nbb_lr = []
+                nbb_keys = set()
+                for k, param in params_dict.items():
+                    if any(part in k for part in config.TRAIN.NONBACKBONE_KEYWORDS):
+                        nbb_lr.append(param)
+                        nbb_keys.add(k)
+                    else:
+                        bb_lr.append(param)
+                params = [{'params': bb_lr, 'lr': self.base_min_lr},
+                          {'params': nbb_lr, 'lr': self.base_min_lr * config.TRAIN.NONBACKBONE_MULT}]
+            else:
+                params = [{'params': list(params_dict.values()), 'lr': self.base_min_lr}]
+            return params
+
+        params = _get_parameter(self.model)
+        optimizer = optim.SGD(params, lr=self.base_min_lr,
                               momentum=0.9, weight_decay=1e-5)
         loss_record = []
         lr_record = []
@@ -202,6 +222,8 @@ class InitLRFindJob(object):
                 loss.backward()
                 optimizer.step()
                 optimizer.param_groups[0]['lr']*=lr_step_factor
+                if len(optimizer.param_groups) == 2:
+                    optimizer.param_groups[1]['lr'] = optimizer.param_groups[0]['lr']*config.TRAIN.NONBACKBONE_MULT
 
         del self.model
         torch.cuda.empty_cache()

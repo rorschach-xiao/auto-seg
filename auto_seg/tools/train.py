@@ -8,6 +8,7 @@ import logging
 import time
 import timeit
 from pathlib import Path
+import json
 
 import numpy as np
 
@@ -102,8 +103,13 @@ def main():
         )
     # initial lr search
     if config.TRAIN.IS_SEARCH_LR:
-        lr_find_job = InitLRFindJob(config,args,final_output_dir)
-        opt_lr = lr_find_job._run_search()
+        if config.TRAIN.SEARCH_PARAM_FILE=='':
+            lr_find_job = InitLRFindJob(config,args,final_output_dir)
+            opt_lr = lr_find_job._run_search(config)
+        else:
+            with open(os.path.join(final_output_dir,config.TRAIN.SEARCH_PARAM_FILE),'r') as f:
+                lr_param_dict = json.load(f)
+                opt_lr = lr_param_dict['opt_lr']
     # build model
     model = eval('models.nets.' + config.MODEL.NAME +
                      '.get_seg_model')(config)
