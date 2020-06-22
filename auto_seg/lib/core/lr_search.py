@@ -125,7 +125,7 @@ class InitLRFindJob(object):
             raise Exception("error : only support DiceLoss,CrossEntropy,BCELoss,ComboLoss and LovaszLoss now!")
         return criterion
 
-    def _find_opt_lr(self,lr_record,loss_record):
+    def _find_opt_lr(self,lr_record,loss_record,lr_factor=10):
 
         if any(np.isnan(np.array(loss_record))):
             nan_pos = np.argmax(np.isnan(loss_record))
@@ -155,7 +155,7 @@ class InitLRFindJob(object):
         if min_pos == 0 or min_pos == len(predict_y) - 1:
             min_pos = len(predict_y) // 2
 
-        max_lr = lr_record[min_pos] / 4
+        max_lr = lr_record[min_pos] / lr_factor
 
         return max_lr,list(predict_y),list(smooth_loss)
 
