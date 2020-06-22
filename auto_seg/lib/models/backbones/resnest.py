@@ -314,7 +314,7 @@ def resnest50(pretrained=False, model_path='./pretrained_models/resnest50-528c19
                    deep_stem=True, stem_width=32, avg_down=True,
                    avd=True, avd_first=False, **kwargs)
     if pretrained:
-        model.load_state_dict(torch.load(model_path),strict=True)
+        model.load_state_dict(torch.load(model_path),strict=False)
     return model
 
 def resnest101(pretrained=False, model_path='./pretrained_models/resnest101-22405ba7.pth', **kwargs):
@@ -324,7 +324,7 @@ def resnest101(pretrained=False, model_path='./pretrained_models/resnest101-2240
                    avd=True, avd_first=False, **kwargs)
     print(model)
     if pretrained:
-        model.load_state_dict(torch.load(model_path),strict=True)
+        model.load_state_dict(torch.load(model_path),strict=False)
     return model
 
 def resnest200(pretrained=False, model_path='./pretrained_models/resnest200-75117900.pth', **kwargs):
@@ -333,5 +333,5 @@ def resnest200(pretrained=False, model_path='./pretrained_models/resnest200-7511
                    deep_stem=True, stem_width=64, avg_down=True,
                    avd=True, avd_first=False, **kwargs)
     if pretrained:
-        model.load_state_dict(torch.load(model_path),strict=True)
+        model.load_state_dict(torch.load(model_path),strict=False)
     return model
