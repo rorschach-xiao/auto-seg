@@ -125,7 +125,7 @@ class InitLRFindJob(object):
             raise Exception("error : only support DiceLoss,CrossEntropy,BCELoss,ComboLoss and LovaszLoss now!")
         return criterion
 
-    def _find_opt_lr(self,lr_record,loss_record,lr_factor=10):
+    def _find_opt_lr(self,lr_record,loss_record,lr_factor=1):
 
         if any(np.isnan(np.array(loss_record))):
             nan_pos = np.argmax(np.isnan(loss_record))
@@ -143,8 +143,9 @@ class InitLRFindJob(object):
         loss_record = np.array(smooth_loss)
         model = linear_model.LinearRegression(fit_intercept=True, normalize=True)
         #     model = linear_model.Ridge(alpha=0.001,fit_intercept=True, normalize=True)
-        clf = Pipeline([('poly', PolynomialFeatures(degree=6)), ('linear', model)])
-        clf.fit(lr_record[:, np.newaxis], loss_record)
+
+        clf = Pipeline([('poly', PolynomialFeatures(degree=8)), ('linear', model)])
+        clf.fit(lr_record[:int(len(lr_record)*0.8), np.newaxis], loss_record[:int(len(lr_record)*0.8)])
 
         predict_y = clf.predict(lr_record[:, np.newaxis])
         min_pos = 0
