@@ -92,10 +92,10 @@ class PASCALContext(BaseDataset):
 
     def __getitem__(self, index):
         item = self.files[index]
-        name = item['file_name']
+        name = item['file_name'].split('.')[0]
         img_id = item['image_id']
 
-        image = cv2.imread(os.path.join(self.detail.img_folder, name),
+        image = cv2.imread(os.path.join(self.detail.img_folder, name+'.jpg'),
                            cv2.IMREAD_COLOR)
         label = np.asarray(self.masks[img_id], dtype=np.int)
         label = self.label_transform(label)
