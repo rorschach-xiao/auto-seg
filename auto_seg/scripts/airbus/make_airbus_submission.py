@@ -51,7 +51,7 @@ def rle_encode(img):
     return ' '.join(str(x) for x in runs)
 
 def remove_smallest(mask, min_contour_area):
-    _,contours, _= cv2.findContours(
+    contours, _= cv2.findContours(
         mask.copy(), cv2.RETR_TREE,
         cv2.CHAIN_APPROX_SIMPLE
     )
@@ -94,7 +94,7 @@ def main():
         for img in tqdm(test_list):
             name = img.split(".")[0]
             mask = cv2.imread(os.path.join(test_path, img), cv2.IMREAD_GRAYSCALE)
-            rle = apply_thresholds(mask, args.area_thres, args.min_contour_area)
+            rle = apply_thresholds(mask, int(args.area_thres), int(args.min_contour_area))
             writer.writerow([name + ".jpg", rle])
 
 if __name__=='__main__':
