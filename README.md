@@ -2,7 +2,7 @@
 
 
 
-- ### 目前最好效果
+- ### 目前单模型最好效果
 
 |         dataset         |  Metric  | score(%) |       Network       |
 | :---------------------: | :------: | :------: | :-----------------: |
@@ -15,7 +15,7 @@
 | bdd100k domain adaption |   mIoU   |  53.81   |     HRNet48+OCR     |
 |    bdd100k drivable     |   mIoU   |  85.06   |     HRNet48+OCR     |
 |        SIIM-ACR         |   Dice   |  85.20   |     HRNet48+OCR     |
-|         airbus          | F1-score |          |                     |
+|         airbus          | F1-score |  83.18   | ResNeSt101+ASPP+OCR |
 |         Carvana         |   Dice   |  99.631  | ResNeSt101+ASPP+OCR |
 |       KolektorSDD       |   Dice   |  93.78   |     HRNet48+OCR     |
 |          Inria          |   mIoU   |  76.99   |     HRNet48+OCR     |
